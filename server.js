@@ -368,9 +368,10 @@ app.post('/admin/settings/save', requireAuth, (req, res) => {
   res.redirect('/admin/settings?saved=1');
 });
 
-// ── DEMO SEED ────────────────────────────────────────────────────────────────
+// ── DEMO SEED (disabled after first run) ─────────────────────────────────────
 
 app.get('/admin/seed-demo', requireAuth, (req, res) => {
+  return res.send('<h2>Seed already run. <a href="/admin">Go to Dashboard</a></h2>');
   const existing = db.prepare('SELECT COUNT(*) as c FROM clients').get().c;
   if (existing > 0) return res.send('<h2>Already seeded. <a href="/admin">Go to Dashboard</a></h2>');
 
