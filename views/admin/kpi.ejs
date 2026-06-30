@@ -1,0 +1,457 @@
+<% pageTitle = 'KPI Dashboard'; activeNav = 'kpi'; layout = 'admin/layout' %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<%
+// ── CALCULATIONS ──────────────────────────────────────────────────────────────
+
+const completedJobs = jobs.filter(j => j.status === 'Completed');
+const totalRevenue = completedJobs.reduce((s, j) => s + (parseFloat(j.price) || 0), 0);
+const totalExpenses = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+const netProfit = totalRevenue - totalExpenses;
+const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+// Labor expenses (category contains 'Labor' or 'Payroll' or 'Wage')
+const laborExpenses = expenses.filter(e => /labor|payroll|wage|crew|employee/i.test(e.category || ''))
+  .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+const laborPct = totalRevenue > 0 ? (laborExpenses / totalRevenue) * 100 : 0;
+
+// Overhead (non-labor expenses)
+const overheadExpenses = expenses.filter(e => !/labor|payroll|wage|crew|employee/i.test(e.category || ''))
+  .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+const overheadRatio = totalRevenue > 0 ? (overheadExpenses / totalRevenue) * 100 : 0;
+
+// Gross margin: revenue minus labor and materials
+const materialExpenses = expenses.filter(e => /material|mulch|seed|plant|supply/i.test(e.category || ''))
+  .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+const directCosts = laborExpenses + materialExpenses;
+const grossMargin = totalRevenue > 0 ? ((totalRevenue - directCosts) / totalRevenue) * 100 : 0;
+
+// Revenue per employee
+const empCount = employees.length || 1;
+const revenuePerEmployee = totalRevenue / empCount;
+
+// Average job value
+const avgJobValue = completedJobs.length > 0 ? totalRevenue / completedJobs.length : 0;
+
+// Customer retention: clients with more than 1 job = returning
+const clientJobCounts = {};
+completedJobs.forEach(j => {
+  if (j.client_id) clientJobCounts[j.client_id] = (clientJobCounts[j.client_id] || 0) + 1;
+});
+const returningClients = Object.values(clientJobCounts).filter(c => c > 1).length;
+const totalActiveClients = Object.keys(clientJobCounts).length;
+const retentionRate = totalActiveClients > 0 ? (returningClients / totalActiveClients) * 100 : 0;
+
+// Revenue per client
+const revenuePerClient = totalActiveClients > 0 ? totalRevenue / totalActiveClients : 0;
+
+// Job completion rate
+const allJobs = jobs.length;
+const completionRate = allJobs > 0 ? (completedJobs.length / allJobs) * 100 : 0;
+
+// EVA: jobs with both estimated and actual hours
+const evaJobs = completedJobs.filter(j => (parseFloat(j.estimated_hours) || 0) > 0 && (parseFloat(j.actual_hours) || 0) > 0);
+const totalEstimated = evaJobs.reduce((s, j) => s + (parseFloat(j.estimated_hours) || 0), 0);
+const totalActual = evaJobs.reduce((s, j) => s + (parseFloat(j.actual_hours) || 0), 0);
+const laborVariance = totalEstimated > 0 ? ((totalActual - totalEstimated) / totalEstimated) * 100 : 0;
+
+// Service mix profitability
+const serviceMix = {};
+completedJobs.forEach(j => {
+  const s = j.service_type || 'Other';
+  if (!serviceMix[s]) serviceMix[s] = { revenue: 0, count: 0 };
+  serviceMix[s].revenue += parseFloat(j.price) || 0;
+  serviceMix[s].count++;
+});
+const serviceMixArr = Object.entries(serviceMix).sort((a, b) => b[1].revenue - a[1].revenue);
+
+// Lead conversion
+const totalLeads = leads.length;
+
+// Monthly revenue trend (last 6 months)
+const now = new Date();
+const monthLabels = [];
+const monthRevenue = [];
+for (let i = 5; i >= 0; i--) {
+  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+  monthLabels.push(label);
+  const monthRev = completedJobs.filter(j => {
+    if (!j.scheduled_date) return false;
+    const jd = new Date(j.scheduled_date);
+    return jd.getFullYear() === d.getFullYear() && jd.getMonth() === d.getMonth();
+  }).reduce((s, j) => s + (parseFloat(j.price) || 0), 0);
+  monthRevenue.push(monthRev);
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function pct(n) { return n.toFixed(1) + '%'; }
+
+// KPI status helper: returns 'green', 'gold', 'red'
+function kpiStatus(value, good, warn) {
+  if (value >= good) return 'green';
+  if (value >= warn) return 'gold';
+  return 'red';
+}
+%>
+
+<style>
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .kpi-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 8px rgba(0,0,0,.06); border: 1px solid #e8f0e8; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #1B3A1B; }
+  .kpi-card.green::before { background: #228B22; }
+  .kpi-card.gold::before { background: #D4A227; }
+  .kpi-card.red::before { background: #8B1A1A; }
+  .kpi-card.blue::before { background: #1a4a7a; }
+  .kpi-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6B7280; margin-bottom: 6px; }
+  .kpi-value { font-size: 2rem; font-weight: 800; color: #1B3A1B; line-height: 1; }
+  .kpi-card.green .kpi-value { color: #228B22; }
+  .kpi-card.gold .kpi-value { color: #a07000; }
+  .kpi-card.red .kpi-value { color: #8B1A1A; }
+  .kpi-benchmark { font-size: .72rem; color: #9aaa9a; margin-top: 5px; }
+  .kpi-status { display: inline-block; font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+  .kpi-status.green { background: #e6f4ec; color: #166534; }
+  .kpi-status.gold { background: #fef9e7; color: #92400e; }
+  .kpi-status.red { background: #fef2f2; color: #8B1A1A; }
+
+  .section-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(27,58,27,.4); margin: 22px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #e8f0e8; }
+
+  .bench-panel { background: #1B3A1B; border-radius: 12px; padding: 18px 22px; margin-bottom: 22px; }
+  .bench-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.07); font-size: .85rem; }
+  .bench-row:last-child { border-bottom: none; }
+  .bench-metric { color: rgba(255,255,255,.75); }
+  .bench-industry { color: rgba(255,255,255,.35); font-size: .78rem; }
+  .bench-yours { font-weight: 700; }
+  .bench-yours.green { color: #8BC34A; }
+  .bench-yours.gold { color: #D4A227; }
+  .bench-yours.red { color: #ef9a9a; }
+
+  .eva-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .eva-table th { text-align: left; padding: 8px 12px; background: #f0f7f0; color: #1B3A1B; font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+  .eva-table td { padding: 10px 12px; border-bottom: 1px solid #f0f4f0; color: #374151; }
+  .eva-table tr:last-child td { border-bottom: none; }
+  .over { color: #8B1A1A; font-weight: 700; }
+  .under { color: #228B22; font-weight: 700; }
+
+  .add-on-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .add-on-card { background: white; border-radius: 10px; padding: 16px 18px; border: 1px solid #e8f0e8; border-left: 4px solid #D4A227; }
+  .add-on-name { font-weight: 700; font-size: .9rem; color: #1B3A1B; margin-bottom: 4px; }
+  .add-on-desc { font-size: .8rem; color: #6B7280; line-height: 1.5; margin-bottom: 8px; }
+  .add-on-price { font-size: .75rem; font-weight: 700; color: #D4A227; }
+</style>
+
+<!-- PAGE HEADER -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div>
+    <h1 style="font-size:1.3rem;font-weight:800;color:#1B3A1B;margin-bottom:4px">📈 KPI Dashboard</h1>
+    <p style="font-size:.82rem;color:#6B7280">Real business metrics benchmarked against the landscaping industry. Updated in real time from your data.</p>
+  </div>
+  <div style="text-align:right;font-size:.78rem;color:#9aaa9a">
+    <div>Based on <strong style="color:#1B3A1B"><%= completedJobs.length %> completed jobs</strong></div>
+    <div><%= clients.length %> clients · <%= employees.length %> active crew</div>
+  </div>
+</div>
+
+<!-- FINANCIAL KPIs -->
+<div class="section-title">💰 Financial Health</div>
+<div class="kpi-grid">
+
+  <div class="kpi-card <%= kpiStatus(netMargin, 13, 10) %>">
+    <div class="kpi-label">Net Profit Margin</div>
+    <div class="kpi-value"><%= pct(netMargin) %></div>
+    <div class="kpi-benchmark">Industry avg: 13% | Healthy: 10–14%</div>
+    <% const nm = kpiStatus(netMargin, 13, 10); %>
+    <span class="kpi-status <%= nm %>">
+      <%= nm === 'green' ? '✓ Above Average' : nm === 'gold' ? '~ Near Average' : '↓ Below Target' %>
+    </span>
+  </div>
+
+  <div class="kpi-card <%= kpiStatus(grossMargin, 45, 35) %>">
+    <div class="kpi-label">Gross Margin</div>
+    <div class="kpi-value"><%= pct(grossMargin) %></div>
+    <div class="kpi-benchmark">Healthy: 45–55% | Based on labor + materials</div>
+    <% const gm = kpiStatus(grossMargin, 45, 35); %>
+    <span class="kpi-status <%= gm %>">
+      <%= gm === 'green' ? '✓ Healthy' : gm === 'gold' ? '~ Acceptable' : '↓ Review Costs' %>
+    </span>
+  </div>
+
+  <div class="kpi-card <%= kpiStatus(100 - overheadRatio, 65, 55) %>">
+    <div class="kpi-label">Overhead Ratio</div>
+    <div class="kpi-value"><%= pct(overheadRatio) %></div>
+    <div class="kpi-benchmark">Keep under 35% · You are at <%= pct(overheadRatio) %></div>
+    <% const or = overheadRatio <= 35 ? 'green' : overheadRatio <= 40 ? 'gold' : 'red'; %>
+    <span class="kpi-status <%= or %>">
+      <%= or === 'green' ? '✓ Under Control' : or === 'gold' ? '~ Watch This' : '↓ Too High' %>
+    </span>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Revenue</div>
+    <div class="kpi-value" style="color:#1a4a7a"><%= fmt(totalRevenue) %></div>
+    <div class="kpi-benchmark">Net profit: <%= fmt(netProfit) %></div>
+  </div>
+
+</div>
+
+<!-- LABOR KPIs -->
+<div class="section-title">👷 Labor Efficiency</div>
+<div class="kpi-grid">
+
+  <div class="kpi-card <%= kpiStatus(100 - laborPct, 65, 55) %>">
+    <div class="kpi-label">Labor Cost %</div>
+    <div class="kpi-value"><%= pct(laborPct) %></div>
+    <div class="kpi-benchmark">Industry avg: 35% | Range: 25–55%</div>
+    <% const lp = laborPct <= 35 ? 'green' : laborPct <= 45 ? 'gold' : 'red'; %>
+    <span class="kpi-status <%= lp %>">
+      <%= lp === 'green' ? '✓ Efficient' : lp === 'gold' ? '~ Monitor' : '↓ High Labor Cost' %>
+    </span>
+  </div>
+
+  <div class="kpi-card <%= kpiStatus(revenuePerEmployee, 164125, 100000) %>">
+    <div class="kpi-label">Revenue / Employee</div>
+    <div class="kpi-value" style="font-size:1.5rem"><%= fmt(revenuePerEmployee) %></div>
+    <div class="kpi-benchmark">Industry avg: $164,125 (Kentley Insights, 2025)</div>
+    <% const rpe = kpiStatus(revenuePerEmployee, 164125, 100000); %>
+    <span class="kpi-status <%= rpe %>">
+      <%= rpe === 'green' ? '✓ Strong' : rpe === 'gold' ? '~ Growing' : '↓ Scale Up Jobs' %>
+    </span>
+  </div>
+
+  <div class="kpi-card <%= evaJobs.length === 0 ? 'blue' : (laborVariance <= 10 ? 'green' : laborVariance <= 20 ? 'gold' : 'red') %>">
+    <div class="kpi-label">Labor Variance (EVA)</div>
+    <% if (evaJobs.length === 0) { %>
+      <div class="kpi-value" style="font-size:1.1rem;color:#9aaa9a">No Data Yet</div>
+      <div class="kpi-benchmark">Enter estimated + actual hours on jobs to track this</div>
+    <% } else { %>
+      <div class="kpi-value"><%= laborVariance > 0 ? '+' : '' %><%= pct(laborVariance) %></div>
+      <div class="kpi-benchmark">Positive = over budget | <%= evaJobs.length %> jobs tracked</div>
+      <% const lv = laborVariance <= 10 ? 'green' : laborVariance <= 20 ? 'gold' : 'red'; %>
+      <span class="kpi-status <%= lv %>">
+        <%= lv === 'green' ? '✓ On Estimate' : lv === 'gold' ? '~ Slight Overrun' : '↓ Review Bids' %>
+      </span>
+    <% } %>
+  </div>
+
+</div>
+
+<!-- CUSTOMER KPIs -->
+<div class="section-title">👥 Customer Performance</div>
+<div class="kpi-grid">
+
+  <div class="kpi-card <%= kpiStatus(retentionRate, 90, 80) %>">
+    <div class="kpi-label">Client Retention Rate</div>
+    <div class="kpi-value"><%= pct(retentionRate) %></div>
+    <div class="kpi-benchmark">Top performers: 90–95% (NALP, 2024)</div>
+    <% const rr = kpiStatus(retentionRate, 90, 80); %>
+    <span class="kpi-status <%= rr %>">
+      <%= rr === 'green' ? '✓ Excellent' : rr === 'gold' ? '~ Good' : '↓ Focus on Follow-Up' %>
+    </span>
+  </div>
+
+  <div class="kpi-card <%= kpiStatus(avgJobValue, 5000, 2600) %>">
+    <div class="kpi-label">Avg Job Value</div>
+    <div class="kpi-value" style="font-size:1.5rem"><%= fmt(avgJobValue) %></div>
+    <div class="kpi-benchmark">Industry range: $2,600–$13,700 (WebFX, 2025)</div>
+    <% const ajv = kpiStatus(avgJobValue, 5000, 2600); %>
+    <span class="kpi-status <%= ajv %>">
+      <%= ajv === 'green' ? '✓ Strong Value' : ajv === 'gold' ? '~ Growing' : '↓ Upsell Clients' %>
+    </span>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-label">Revenue / Client</div>
+    <div class="kpi-value" style="font-size:1.5rem;color:#1a4a7a"><%= fmt(revenuePerClient) %></div>
+    <div class="kpi-benchmark">NALP median: $14,682/yr per client (2025)</div>
+  </div>
+
+  <div class="kpi-card <%= kpiStatus(completionRate, 95, 85) %>">
+    <div class="kpi-label">Job Completion Rate</div>
+    <div class="kpi-value"><%= pct(completionRate) %></div>
+    <div class="kpi-benchmark">Target: 95%+ on-time completion</div>
+    <% const cr = kpiStatus(completionRate, 95, 85); %>
+    <span class="kpi-status <%= cr %>">
+      <%= cr === 'green' ? '✓ Reliable' : cr === 'gold' ? '~ Good' : '↓ Check Scheduling' %>
+    </span>
+  </div>
+
+</div>
+
+<!-- INDUSTRY BENCHMARK PANEL -->
+<div class="section-title">📊 Industry Benchmark Comparison</div>
+<div class="bench-panel">
+  <div style="color:rgba(255,255,255,.35);font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Your Numbers vs Industry Averages (IBISWorld, NALP, Kentley Insights 2024–2025)</div>
+  <%
+  const benchmarks = [
+    ['Net Profit Margin', pct(netMargin), '13%', kpiStatus(netMargin, 13, 10)],
+    ['Gross Profit Margin', pct(grossMargin), '45–55%', kpiStatus(grossMargin, 45, 35)],
+    ['Overhead Ratio', pct(overheadRatio), '20–35%', overheadRatio <= 35 ? 'green' : overheadRatio <= 40 ? 'gold' : 'red'],
+    ['Labor Cost %', pct(laborPct), '35%', laborPct <= 35 ? 'green' : laborPct <= 45 ? 'gold' : 'red'],
+    ['Revenue per Employee', fmt(revenuePerEmployee), '$164,125', kpiStatus(revenuePerEmployee, 164125, 100000)],
+    ['Client Retention Rate', pct(retentionRate), '90–95%', kpiStatus(retentionRate, 90, 80)],
+    ['Average Job Value', fmt(avgJobValue), '$2,600–$13,700', kpiStatus(avgJobValue, 5000, 2600)],
+    ['Job Completion Rate', pct(completionRate), '95%+', kpiStatus(completionRate, 95, 85)],
+  ];
+  %>
+  <% benchmarks.forEach(function(b) { %>
+  <div class="bench-row">
+    <div class="bench-metric"><%= b[0] %></div>
+    <div class="bench-industry">Industry: <%= b[2] %></div>
+    <div class="bench-yours <%= b[3] %>"><%= b[1] %></div>
+  </div>
+  <% }); %>
+</div>
+
+<!-- SERVICE MIX -->
+<div class="section-title">🌿 Service Mix Profitability</div>
+<div class="card">
+  <% if (serviceMixArr.length === 0) { %>
+    <div style="text-align:center;padding:30px;color:#9aaa9a;font-size:.88rem">No completed jobs yet. Revenue by service type will appear here as jobs are completed.</div>
+  <% } else { %>
+  <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+    <tr style="background:#f0f7f0">
+      <th style="text-align:left;padding:10px 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#1B3A1B">Service Type</th>
+      <th style="text-align:right;padding:10px 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#1B3A1B">Jobs</th>
+      <th style="text-align:right;padding:10px 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#1B3A1B">Revenue</th>
+      <th style="text-align:right;padding:10px 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#1B3A1B">Avg/Job</th>
+      <th style="text-align:left;padding:10px 14px;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#1B3A1B">Share</th>
+    </tr>
+    <% serviceMixArr.forEach(function(s, i) {
+      const share = totalRevenue > 0 ? (s[1].revenue / totalRevenue) * 100 : 0;
+    %>
+    <tr style="border-bottom:1px solid #f0f4f0">
+      <td style="padding:11px 14px;font-weight:600;color:#1B3A1B"><%= s[0] %></td>
+      <td style="padding:11px 14px;text-align:right;color:#6B7280"><%= s[1].count %></td>
+      <td style="padding:11px 14px;text-align:right;font-weight:700;color:#228B22"><%= fmt(s[1].revenue) %></td>
+      <td style="padding:11px 14px;text-align:right;color:#374151"><%= fmt(s[1].revenue / s[1].count) %></td>
+      <td style="padding:11px 14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:#e8f0e8;border-radius:4px">
+            <div style="width:<%= share.toFixed(0) %>%;height:100%;background:#228B22;border-radius:4px"></div>
+          </div>
+          <span style="font-size:.75rem;color:#6B7280;white-space:nowrap"><%= share.toFixed(0) %>%</span>
+        </div>
+      </td>
+    </tr>
+    <% }); %>
+  </table>
+  <% } %>
+</div>
+
+<!-- EVA JOB COSTING -->
+<div class="section-title">⏱️ Estimated vs. Actual Labor (EVA Costing)</div>
+<div class="card">
+  <div style="background:#fef9e7;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.82rem;color:#92400e">
+    <strong>How to use this:</strong> When scheduling a job, enter your estimated hours. When the crew finishes, update the actual hours. This table shows where your bids are accurate — and where crews are running over.
+  </div>
+  <% if (evaJobs.length === 0) { %>
+    <div style="text-align:center;padding:30px;color:#9aaa9a;font-size:.88rem">
+      No EVA data yet. Edit any completed job to add <strong>Estimated Hours</strong> and <strong>Actual Hours</strong> to start tracking labor variance.
+    </div>
+  <% } else { %>
+  <table class="eva-table">
+    <tr>
+      <th>Job</th>
+      <th>Client</th>
+      <th>Service</th>
+      <th style="text-align:right">Est. Hrs</th>
+      <th style="text-align:right">Act. Hrs</th>
+      <th style="text-align:right">Variance</th>
+    </tr>
+    <% evaJobs.slice(0, 20).forEach(function(j) {
+      const est = parseFloat(j.estimated_hours) || 0;
+      const act = parseFloat(j.actual_hours) || 0;
+      const diff = act - est;
+      const diffPct = est > 0 ? (diff / est) * 100 : 0;
+    %>
+    <tr>
+      <td style="font-weight:600"><%= j.title %></td>
+      <td style="color:#6B7280"><%= j.client_name || '—' %></td>
+      <td><%= j.service_type || '—' %></td>
+      <td style="text-align:right"><%= est.toFixed(1) %></td>
+      <td style="text-align:right"><%= act.toFixed(1) %></td>
+      <td style="text-align:right" class="<%= diff > 0 ? 'over' : 'under' %>">
+        <%= diff > 0 ? '+' : '' %><%= diff.toFixed(1) %>h (<%= diffPct > 0 ? '+' : '' %><%= diffPct.toFixed(0) %>%)
+      </td>
+    </tr>
+    <% }); %>
+  </table>
+  <% } %>
+</div>
+
+<!-- REVENUE TREND CHART -->
+<div class="section-title">📅 Revenue Trend — Last 6 Months</div>
+<div class="card" style="padding:20px 24px">
+  <canvas id="trendChart" height="80"></canvas>
+</div>
+
+<!-- CUSTOM ADD-ONS AVAILABLE -->
+<div class="section-title">🔧 Advanced Add-Ons Available (Custom Quote)</div>
+<div style="background:#fff8e8;border:1px solid #D4A227;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:.83rem;color:#7a5800">
+  These features are not included in the standard plan. They require additional setup and are priced per client based on complexity. Contact your Sites by Mel consultant to add any of these.
+</div>
+<div class="add-on-grid">
+  <div class="add-on-card">
+    <div class="add-on-name">📍 Route Density & Profitability</div>
+    <div class="add-on-desc">Map which ZIP codes and neighborhoods are most profitable. See travel cost vs revenue per area. Know before you quote whether a new client is worth the drive.</div>
+    <div class="add-on-price">Custom Quote — requires Google Maps API</div>
+  </div>
+  <div class="add-on-card">
+    <div class="add-on-name">🚜 Equipment ROI Tracker</div>
+    <div class="add-on-desc">Allocate fuel, maintenance, and depreciation costs to specific job types. Know exactly what your mower, truck, or skid steer earns — and what it costs per hour.</div>
+    <div class="add-on-price">Custom Quote — equipment table + job allocation</div>
+  </div>
+  <div class="add-on-card">
+    <div class="add-on-name">📊 QuickBooks Sync</div>
+    <div class="add-on-desc">Two-way sync with QuickBooks Online. Invoices, expenses, and payroll flow automatically. Eliminates double entry and keeps your accountant happy.</div>
+    <div class="add-on-price">$500 setup + $25/mo</div>
+  </div>
+  <div class="add-on-card">
+    <div class="add-on-name">🔗 Jobber / ServiceTitan Sync</div>
+    <div class="add-on-desc">If you already use Jobber or ServiceTitan in the field, we can pull that data into this dashboard so everything lives in one place.</div>
+    <div class="add-on-price">$500 setup + $25/mo</div>
+  </div>
+  <div class="add-on-card">
+    <div class="add-on-name">📱 Lead Channel Conversion Tracking</div>
+    <div class="add-on-desc">Track exactly which marketing channel — Google Ads, yard signs, referrals, Facebook — generated each lead and what it cost to close. Know your true cost per acquisition.</div>
+    <div class="add-on-price">$150 setup (one-time)</div>
+  </div>
+  <div class="add-on-card">
+    <div class="add-on-name">⚡ Response Time Automation</div>
+    <div class="add-on-desc">Auto-log the time between a quote request and your first response. Studies show responding within 5 minutes makes you 21x more likely to win the job.</div>
+    <div class="add-on-price">Custom Quote</div>
+  </div>
+</div>
+
+<script>
+const ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: <%- JSON.stringify(monthLabels) %>,
+    datasets: [{
+      label: 'Revenue',
+      data: <%- JSON.stringify(monthRevenue) %>,
+      backgroundColor: '#228B22',
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: v => '$' + v.toLocaleString(),
+          font: { size: 11 }
+        },
+        grid: { color: '#f0f4f0' }
+      },
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+</script>

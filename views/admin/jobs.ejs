@@ -35,6 +35,8 @@
       </div>
       <div class="form-row"><label>Scheduled Date</label><input type="date" name="scheduled_date"></div>
       <div class="form-row"><label>Price ($)</label><input type="number" name="price" step="0.01" min="0"></div>
+      <div class="form-row"><label>Estimated Hours <span style="font-weight:400;color:#9aaa9a">(for KPI tracking)</span></label><input type="number" name="estimated_hours" step="0.5" min="0" placeholder="e.g. 4"></div>
+      <div class="form-row"><label>Actual Hours <span style="font-weight:400;color:#9aaa9a">(fill in after completion)</span></label><input type="number" name="actual_hours" step="0.5" min="0" placeholder="e.g. 4.5"></div>
       <div class="form-row form-full"><label>Notes</label><textarea name="notes"></textarea></div>
     </div>
     <div class="form-actions"><button type="submit" class="btn btn-green">Save Job</button></div>

@@ -64,10 +64,15 @@ db.exec(`
     scheduled_date TEXT,
     completed_date TEXT,
     price REAL DEFAULT 0,
+    estimated_hours REAL DEFAULT 0,
+    actual_hours REAL DEFAULT 0,
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   )
 `);
+// Migrations for existing databases
+try { db.exec(`ALTER TABLE jobs ADD COLUMN estimated_hours REAL DEFAULT 0`); } catch(e) {}
+try { db.exec(`ALTER TABLE jobs ADD COLUMN actual_hours REAL DEFAULT 0`); } catch(e) {}
 
 // ── GALLERY ───────────────────────────────────────────────────────────────────
 db.exec(`
@@ -93,10 +98,12 @@ db.exec(`
     zip TEXT,
     service TEXT,
     message TEXT,
+    lead_source TEXT DEFAULT 'Website',
     status TEXT DEFAULT 'New',
     created_at TEXT DEFAULT (datetime('now'))
   )
 `);
+try { db.exec(`ALTER TABLE contact_requests ADD COLUMN lead_source TEXT DEFAULT 'Website'`); } catch(e) {}
 
 // ── CUSTOMER MESSAGES ─────────────────────────────────────────────────────────
 db.exec(`

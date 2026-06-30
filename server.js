@@ -184,13 +184,13 @@ app.get('/admin/jobs', requireAuth, (req, res) => {
 });
 
 app.post('/admin/jobs/save', requireAuth, (req, res) => {
-  const { id, client_id, title, service_type, status, scheduled_date, completed_date, price, notes } = req.body;
+  const { id, client_id, title, service_type, status, scheduled_date, completed_date, price, estimated_hours, actual_hours, notes } = req.body;
   if (id) {
-    db.prepare('UPDATE jobs SET client_id=?,title=?,service_type=?,status=?,scheduled_date=?,completed_date=?,price=?,notes=? WHERE id=?')
-      .run(client_id||null, title, service_type||null, status||'Scheduled', scheduled_date||null, completed_date||null, price||0, notes||null, id);
+    db.prepare('UPDATE jobs SET client_id=?,title=?,service_type=?,status=?,scheduled_date=?,completed_date=?,price=?,estimated_hours=?,actual_hours=?,notes=? WHERE id=?')
+      .run(client_id||null, title, service_type||null, status||'Scheduled', scheduled_date||null, completed_date||null, price||0, estimated_hours||0, actual_hours||0, notes||null, id);
   } else {
-    db.prepare('INSERT INTO jobs (client_id,title,service_type,status,scheduled_date,completed_date,price,notes) VALUES (?,?,?,?,?,?,?,?)')
-      .run(client_id||null, title, service_type||null, status||'Scheduled', scheduled_date||null, completed_date||null, price||0, notes||null);
+    db.prepare('INSERT INTO jobs (client_id,title,service_type,status,scheduled_date,completed_date,price,estimated_hours,actual_hours,notes) VALUES (?,?,?,?,?,?,?,?,?,?)')
+      .run(client_id||null, title, service_type||null, status||'Scheduled', scheduled_date||null, completed_date||null, price||0, estimated_hours||0, actual_hours||0, notes||null);
   }
   res.redirect('/admin/jobs?saved=1');
 });
@@ -322,6 +322,17 @@ app.get('/admin/analytics', requireAuth, (req, res) => {
   const clients = db.prepare('SELECT * FROM clients').all();
   const employees = db.prepare('SELECT * FROM employees').all();
   res.render('admin/analytics', { jobs, expenses, clients, employees });
+});
+
+// ── KPI DASHBOARD ─────────────────────────────────────────────────────────────
+
+app.get('/admin/kpi', requireAuth, (req, res) => {
+  const jobs = db.prepare('SELECT jobs.*, clients.name as client_name FROM jobs LEFT JOIN clients ON jobs.client_id=clients.id ORDER BY scheduled_date DESC').all();
+  const expenses = db.prepare('SELECT * FROM expenses ORDER BY date DESC').all();
+  const clients = db.prepare('SELECT * FROM clients').all();
+  const employees = db.prepare("SELECT * FROM employees WHERE status='Active'").all();
+  const leads = db.prepare('SELECT * FROM contact_requests ORDER BY created_at DESC').all();
+  res.render('admin/kpi', { jobs, expenses, clients, employees, leads });
 });
 
 // ── JOB STATUS UPDATE ────────────────────────────────────────────────────────
