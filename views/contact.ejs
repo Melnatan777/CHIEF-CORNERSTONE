@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Get a Free Quote</h1>
+    <p>Tell us about your property and we'll get back to you within 24 hours.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+
+      <div class="contact-form-wrap">
+        <% if (sent) { %>
+        <div class="alert-success-pub">
+          ✓ Thank you! We received your request and will be in touch within 24 hours.
+        </div>
+        <% } %>
+        <form method="POST" action="/contact" class="contact-form">
+          <div class="form-row-pub">
+            <label>Full Name *</label>
+            <input type="text" name="name" required placeholder="John Smith">
+          </div>
+          <div class="form-row-pub">
+            <label>Phone Number *</label>
+            <input type="tel" name="phone" required placeholder="(210) 555-0000">
+          </div>
+          <div class="form-row-pub">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="john@example.com">
+          </div>
+          <div class="form-row-pub">
+            <label>ZIP Code</label>
+            <input type="text" name="zip" placeholder="78201" maxlength="5">
+          </div>
+          <div class="form-row-pub">
+            <label>Service Needed</label>
+            <select name="service">
+              <option value="">Select a service...</option>
+              <option>Lawn Maintenance</option>
+              <option>Landscape Design</option>
+              <option>Tree & Shrub Trimming</option>
+              <option>Irrigation</option>
+              <option>Hardscaping</option>
+              <option>Seasonal Cleanup</option>
+              <option>Not Sure — Need a Consultation</option>
+            </select>
+          </div>
+          <div class="form-row-pub">
+            <label>Tell Us About Your Property</label>
+            <textarea name="message" placeholder="Describe your yard, what you're looking for, any specific issues..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-gold btn-block">Send My Request</button>
+        </form>
+      </div>
+
+      <div class="contact-info">
+        <div class="contact-info-card">
+          <div class="contact-info-icon">📍</div>
+          <h4>Service Area</h4>
+          <p>Serving the greater San Antonio area and surrounding Texas counties.</p>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-info-icon">⏰</div>
+          <h4>Hours</h4>
+          <p>Monday – Saturday<br>7:00 AM – 6:00 PM</p>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-info-icon">✅</div>
+          <h4>Free Estimates</h4>
+          <p>We come to you, assess your property, and give you an honest quote — no obligation.</p>
+        </div>
+        <div class="scripture" style="margin-top:28px">
+          <span>"Whatever you do, work at it with all your heart, as working for the Lord."</span>
+          <cite>— Colossians 3:23</cite>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

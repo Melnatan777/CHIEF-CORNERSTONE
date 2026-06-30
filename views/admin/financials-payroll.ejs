@@ -1,0 +1,119 @@
+<% pageTitle = 'Payroll & Compensation'; activeNav = 'payroll'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Payroll entry saved.</div><% } %>
+
+<%
+const totalPayroll = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+const totalHours = employees.reduce((s,e)=>s+(parseFloat(e.hourly_rate||0)*40),0); // est 40hr week
+%>
+
+<div class="stats-grid" style="margin-bottom:20px">
+  <div class="stat-card red">
+    <div class="stat-number">$<%= totalPayroll.toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Total Payroll Logged</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number"><%= employees.length %></div>
+    <div class="stat-label">Active Employees</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-number">$<%= employees.length > 0 ? (employees.reduce((s,e)=>s+(parseFloat(e.hourly_rate)||0),0)/employees.length).toFixed(2) : '0.00' %></div>
+    <div class="stat-label">Avg Hourly Rate</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">$<%= (totalPayroll * 0.0765).toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Est. Employer FICA</div>
+    <div class="stat-sub" style="color:#9aaa9a">7.65% match</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+  <div>
+
+    <!-- Employee Compensation Table -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h2>👷 Employee Compensation</h2></div>
+      <% if (employees.length === 0) { %>
+      <div class="empty-state"><div class="icon">👷</div><p>No employees yet. <a href="/admin/employees">Add crew →</a></p></div>
+      <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Role</th><th>Hourly Rate</th><th>Est. Weekly</th><th>Est. Monthly</th><th>Est. Annual</th></tr></thead>
+          <tbody>
+            <% employees.forEach(function(e) { %>
+            <%
+              const rate = parseFloat(e.hourly_rate)||0;
+              const weekly = rate * 40;
+              const monthly = weekly * 4.33;
+              const annual = weekly * 52;
+            %>
+            <tr>
+              <td style="font-weight:700"><%= e.name %></td>
+              <td><span class="badge badge-green"><%= e.role||'Crew' %></span></td>
+              <td style="font-weight:700;color:#1B3A1B">$<%= rate.toFixed(2) %>/hr</td>
+              <td>$<%= weekly.toFixed(0) %></td>
+              <td>$<%= monthly.toFixed(0) %></td>
+              <td style="font-weight:700;color:#8B1A1A">$<%= annual.toLocaleString('en-US',{minimumFractionDigits:0}) %></td>
+            </tr>
+            <% }) %>
+            <tr style="background:#f0f4f0;font-weight:700">
+              <td colspan="4">Total Annual Payroll Estimate</td>
+              <td></td>
+              <td style="color:#8B1A1A;font-weight:800">$<%= employees.reduce((s,e)=>s+((parseFloat(e.hourly_rate)||0)*40*52),0).toLocaleString('en-US',{minimumFractionDigits:0}) %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Payroll Log -->
+    <div class="card">
+      <div class="card-header"><h2>📋 Payroll Log</h2></div>
+      <% if (expenses.length === 0) { %>
+      <div class="empty-state"><div class="icon">📋</div><p>No payroll entries yet.</p></div>
+      <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Employee</th><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>
+            <% expenses.forEach(function(e) { %>
+            <tr>
+              <td style="color:#7a8a7a;font-size:.82rem"><%= e.date||'—' %></td>
+              <td style="font-weight:600"><%= e.description||'—' %></td>
+              <td><span class="badge badge-gray">Labor</span></td>
+              <td style="font-weight:700;color:#8B1A1A">$<%= parseFloat(e.amount).toFixed(2) %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Log Payroll -->
+  <div style="position:sticky;top:24px">
+    <div class="card">
+      <div class="card-header"><h2>+ Log Payroll</h2></div>
+      <form method="POST" action="/admin/expenses/save">
+        <input type="hidden" name="category" value="Labor">
+        <div class="form-row"><label>Employee</label>
+          <select name="description">
+            <option value="">Select...</option>
+            <% employees.forEach(function(e){ %><option value="<%= e.name %>"><%= e.name %></option><% }) %>
+            <option value="Contract Labor">Contract Labor</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Date</label><input type="date" name="date"></div>
+        <div class="form-row"><label>Amount Paid ($)</label><input type="number" name="amount" step="0.01" min="0" required></div>
+        <div class="form-actions"><button type="submit" class="btn btn-green">Log Payment</button></div>
+      </form>
+    </div>
+
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-top:14px">
+      <div style="font-weight:700;color:#92400e;font-size:.85rem;margin-bottom:8px">📊 QuickBooks Export</div>
+      <p style="font-size:.82rem;color:#7a5500;line-height:1.6">Export your payroll data to QuickBooks, Wave, or your accountant by printing this page or copying the table data.</p>
+    </div>
+  </div>
+</div>

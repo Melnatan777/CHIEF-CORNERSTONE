@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Our Work</h1>
+    <p>Before and after transformations from real Texas properties.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <% if (typeof galleryItems !== 'undefined' && galleryItems.length > 0) { %>
+    <div class="gallery-grid">
+      <% galleryItems.forEach(item => { %>
+      <div class="gallery-card">
+        <% if (item.image_url) { %>
+        <img src="<%= item.image_url %>" alt="<%= item.title %>">
+        <% } else { %>
+        <div class="gallery-placeholder">📷</div>
+        <% } %>
+        <div class="gallery-info">
+          <h4><%= item.title %></h4>
+          <% if (item.service_type) { %><span class="badge-service"><%= item.service_type %></span><% } %>
+          <% if (item.description) { %><p><%= item.description %></p><% } %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div style="text-align:center;padding:80px 20px;color:#9a9a8a">
+      <div style="font-size:3rem;margin-bottom:16px">📷</div>
+      <h3 style="color:#5a5a4a;margin-bottom:8px">Gallery Coming Soon</h3>
+      <p>We're documenting our latest projects. Check back soon to see our work.</p>
+      <a href="/contact" class="btn btn-green" style="margin-top:20px">Request a Quote Instead</a>
+    </div>
+    <% } %>
+  </div>
+</section>
+
+<section class="section section-cta">
+  <div class="container" style="text-align:center">
+    <h2>Want Results Like These?</h2>
+    <p>Contact us for a free estimate on your property.</p>
+    <a href="/contact" class="btn btn-gold" style="margin-top:24px">Get a Free Quote</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

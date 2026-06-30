@@ -1,0 +1,204 @@
+<% pageTitle = 'Dashboard'; activeNav = 'dashboard'; layout = 'admin/layout' %>
+
+<%
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now = new Date();
+const todayLabel = days[now.getDay()] + ' · ' + months[now.getMonth()] + ' ' + now.getDate();
+const tomorrowDate = new Date(now.getTime() + 86400000);
+const tomorrowLabel = days[tomorrowDate.getDay()] + ' · ' + months[tomorrowDate.getMonth()] + ' ' + tomorrowDate.getDate();
+const todayRevenue = todayJobs.reduce((s,j) => s + (parseFloat(j.price)||0), 0);
+const tomorrowRevenue = tomorrowJobs.reduce((s,j) => s + (parseFloat(j.price)||0), 0);
+%>
+
+<!-- Top Stats Row -->
+<div class="stats-grid" style="margin-bottom:16px">
+  <div class="stat-card green">
+    <div class="stat-number"><%= clientCount %></div>
+    <div class="stat-label">Total Clients</div>
+    <div class="stat-sub"><a href="/admin/clients" style="color:#228B22;text-decoration:none">Manage →</a></div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-number"><%= jobCount %></div>
+    <div class="stat-label">Jobs Scheduled</div>
+    <div class="stat-sub"><a href="/admin/jobs" style="color:#D4A227;text-decoration:none">View all →</a></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number"><%= employeeCount %></div>
+    <div class="stat-label">Active Crew</div>
+    <div class="stat-sub"><a href="/admin/employees" style="color:#1B3A1B;text-decoration:none">Manage →</a></div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-number">$<%= revenue.toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Revenue Earned</div>
+    <div class="stat-sub"><a href="/admin/analytics" style="color:#D4A227;text-decoration:none">Analytics →</a></div>
+  </div>
+  <div class="stat-card <%= newLeads > 0 ? 'red' : '' %>">
+    <div class="stat-number" style="<%= newLeads > 0 ? 'color:#8B1A1A' : '' %>"><%= newLeads %></div>
+    <div class="stat-label">Quote Requests</div>
+    <div class="stat-sub"><a href="/admin/leads" style="color:#8B1A1A;text-decoration:none"><%= newLeads > 0 ? '⚡ Review now' : 'View →' %></a></div>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+
+  <!-- LEFT: Dispatch Board -->
+  <div>
+
+    <!-- New Leads Alert -->
+    <% if (recentLeads.length > 0) { %>
+    <div style="background:#fffbf0;border:2px solid #D4A227;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-weight:700;color:#92400e;font-size:.9rem">🔔 New Quote Requests — Follow Up Today</div>
+        <a href="/admin/leads" class="btn btn-sm btn-gold">View All</a>
+      </div>
+      <% recentLeads.slice(0,3).forEach(function(l) { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:white;border-radius:8px;margin-bottom:6px;border:1px solid #fde68a">
+        <div style="font-weight:700;font-size:.85rem;color:#1B3A1B;min-width:120px"><%= l.name || 'Unknown' %></div>
+        <div style="font-size:.82rem;color:#7a5500;flex:1"><%= l.service || 'General inquiry' %><% if(l.zip){ %> · ZIP <%= l.zip %><% } %></div>
+        <div style="font-size:.78rem;color:#9aaa9a"><%= l.phone || '' %></div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <!-- TODAY DISPATCH -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header">
+        <h2>🌅 Today — <%= todayLabel %></h2>
+        <div style="display:flex;align-items:center;gap:10px">
+          <% if (todayRevenue > 0) { %><span style="background:#dcfce7;color:#166534;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px">$<%= todayRevenue.toFixed(0) %> today</span><% } %>
+          <a href="/admin/jobs" class="btn btn-sm btn-green">+ Job</a>
+        </div>
+      </div>
+      <% if (todayJobs.length === 0) { %>
+      <div style="text-align:center;padding:20px 0;color:#9aaa9a;font-size:.88rem">No jobs scheduled today. <a href="/admin/jobs" style="color:#228B22">Schedule one →</a></div>
+      <% } else { %>
+      <% todayJobs.forEach(function(j) { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8faf8;border-radius:10px;margin-bottom:6px;border-left:4px solid <%= j.status==='Completed'?'#9aaa9a':j.status==='In Progress'?'#228B22':'#D4A227' %>">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.9rem;color:#1B3A1B"><%= j.client_name || 'No client' %></div>
+          <div style="font-size:.8rem;color:#7a8a7a;margin-top:2px"><%= j.title %><% if(j.service_type){ %> · <%= j.service_type %><% } %></div>
+        </div>
+        <div style="font-weight:700;font-size:.88rem;color:#1B3A1B">$<%= parseFloat(j.price||0).toFixed(0) %></div>
+        <form method="POST" action="/admin/jobs/status/<%= j.id %>" style="display:flex;gap:4px">
+          <% if(j.status==='Scheduled'){ %>
+          <input type="hidden" name="status" value="In Progress">
+          <button class="btn btn-sm" style="background:#dcfce7;color:#166534;border:1px solid #bbf7d0;font-size:.75rem">▶ Start</button>
+          <% } else if(j.status==='In Progress'){ %>
+          <input type="hidden" name="status" value="Completed">
+          <button class="btn btn-sm" style="background:#228B22;color:white;font-size:.75rem">✓ Done</button>
+          <% } else { %>
+          <span style="background:#f0f4f0;color:#9aaa9a;font-size:.75rem;padding:4px 10px;border-radius:6px;font-weight:600">✓ Completed</span>
+          <% } %>
+        </form>
+      </div>
+      <% }) %>
+      <% } %>
+    </div>
+
+    <!-- TOMORROW -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header">
+        <h2>📅 Tomorrow — <%= tomorrowLabel %></h2>
+        <% if (tomorrowRevenue > 0) { %><span style="background:#fef3c7;color:#92400e;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px">$<%= tomorrowRevenue.toFixed(0) %> scheduled</span><% } %>
+      </div>
+      <% if (tomorrowJobs.length === 0) { %>
+      <div style="text-align:center;padding:20px 0;color:#9aaa9a;font-size:.88rem">Nothing scheduled yet. <a href="/admin/jobs" style="color:#228B22">Add jobs →</a></div>
+      <% } else { %>
+      <% tomorrowJobs.forEach(function(j) { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:#f8faf8;border-radius:10px;margin-bottom:6px;border-left:4px solid #D4A227">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.88rem;color:#1B3A1B"><%= j.client_name || 'No client' %></div>
+          <div style="font-size:.78rem;color:#7a8a7a"><%= j.title %><% if(j.service_type){ %> · <%= j.service_type %><% } %></div>
+        </div>
+        <div style="font-weight:700;font-size:.85rem;color:#1B3A1B">$<%= parseFloat(j.price||0).toFixed(0) %></div>
+        <span class="badge badge-gold"><%= j.status %></span>
+      </div>
+      <% }) %>
+      <% } %>
+    </div>
+
+    <!-- REST OF WEEK -->
+    <div class="card">
+      <div class="card-header"><h2>📆 Rest of the Week</h2></div>
+      <% if (weekJobs.length === 0) { %>
+      <div style="text-align:center;padding:20px 0;color:#9aaa9a;font-size:.88rem">Nothing else scheduled this week.</div>
+      <% } else { %>
+      <%
+        const grouped = {};
+        weekJobs.forEach(function(j){
+          if(!grouped[j.scheduled_date]) grouped[j.scheduled_date] = [];
+          grouped[j.scheduled_date].push(j);
+        });
+      %>
+      <% Object.keys(grouped).forEach(function(date) { %>
+      <%
+        const d = new Date(date + 'T12:00:00');
+        const label = days[d.getDay()] + ' · ' + months[d.getMonth()] + ' ' + d.getDate();
+        const dayRevenue = grouped[date].reduce((s,j)=>s+(parseFloat(j.price)||0),0);
+      %>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:.72rem;font-weight:700;color:#7a8a7a;text-transform:uppercase;letter-spacing:1px"><%= label %></div>
+          <% if(dayRevenue>0){ %><div style="font-size:.75rem;color:#228B22;font-weight:700">$<%= dayRevenue.toFixed(0) %></div><% } %>
+        </div>
+        <% grouped[date].forEach(function(j) { %>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8faf8;border-radius:8px;margin-bottom:4px;border-left:3px solid #dde8dd">
+          <div style="flex:1;font-size:.85rem;font-weight:600;color:#1B3A1B"><%= j.client_name||'—' %></div>
+          <div style="font-size:.8rem;color:#7a8a7a"><%= j.service_type||j.title %></div>
+          <div style="font-size:.82rem;font-weight:700;color:#1B3A1B">$<%= parseFloat(j.price||0).toFixed(0) %></div>
+        </div>
+        <% }) %>
+      </div>
+      <% }) %>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header"><h2>⚡ Actions</h2></div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <a href="/admin/jobs" class="btn btn-green" style="justify-content:center">🌿 Schedule Job</a>
+        <a href="/admin/clients" class="btn btn-ghost" style="justify-content:center">👥 Add Client</a>
+        <a href="/admin/inbox/customers" class="btn btn-ghost" style="justify-content:center">📬 Customer Inbox</a>
+        <a href="/admin/expenses" class="btn btn-ghost" style="justify-content:center">💰 Log Expense</a>
+        <a href="/admin/weather" class="btn btn-ghost" style="justify-content:center">🌤️ Weather Check</a>
+        <a href="/admin/analytics" class="btn btn-ghost" style="justify-content:center">📈 Analytics</a>
+      </div>
+    </div>
+
+    <!-- Weather Mini -->
+    <div style="background:linear-gradient(135deg,#1B3A1B,#2E5A2E);border-radius:12px;padding:16px 18px;margin-bottom:14px;color:white">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8BC34A;margin-bottom:8px">🌤️ Weather Tip</div>
+      <p style="color:rgba(255,255,255,.8);font-size:.82rem;line-height:1.65;margin-bottom:12px">Check the 7-day forecast before you finalize this week's schedule. One rain day = 4 rescheduled jobs.</p>
+      <a href="/admin/weather" style="background:rgba(139,195,74,.25);color:#8BC34A;border:1px solid rgba(139,195,74,.4);font-size:.78rem;padding:6px 14px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Open Weather Center →</a>
+    </div>
+
+    <!-- Inbox Summary -->
+    <div class="card">
+      <div style="font-size:.72rem;font-weight:700;color:#7a8a7a;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">📬 Inboxes</div>
+      <a href="/admin/inbox/customers" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8faf8;border-radius:8px;text-decoration:none;margin-bottom:6px;border:1px solid #dde8dd">
+        <span style="font-size:.85rem;font-weight:600;color:#1B3A1B">👥 Customers</span>
+        <% if(newLeads>0){ %><span style="background:#8B1A1A;color:white;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:10px"><%= newLeads %> new</span><% } else { %><span style="color:#9aaa9a;font-size:.78rem">View →</span><% } %>
+      </a>
+      <a href="/admin/inbox/employees" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8faf8;border-radius:8px;text-decoration:none;border:1px solid #dde8dd">
+        <span style="font-size:.85rem;font-weight:600;color:#1B3A1B">👷 Employees</span>
+        <span style="color:#9aaa9a;font-size:.78rem">View →</span>
+      </a>
+    </div>
+
+    <!-- Scripture -->
+    <div style="background:#1B3A1B;border-radius:12px;padding:18px;text-align:center">
+      <div style="color:#8BC34A;font-style:italic;font-size:.85rem;line-height:1.8;margin-bottom:8px">"Unless the Lord builds the house, the builders labor in vain."</div>
+      <div style="color:rgba(255,255,255,.3);font-size:.7rem">— Psalm 127:1</div>
+    </div>
+
+  </div>
+</div>

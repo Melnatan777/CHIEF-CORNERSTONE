@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Area — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Our Service Area</h1>
+    <p>Proudly serving San Antonio and surrounding Texas communities.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:48px;align-items:start">
+
+      <!-- Map -->
+      <div>
+        <div id="serviceMap" style="height:480px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);border:2px solid var(--cream-dark)"></div>
+        <p style="font-size:.8rem;color:#9a9a7a;margin-top:10px;text-align:center">Not sure if we cover your area? <a href="/contact" style="color:var(--green-dark);font-weight:600">Contact us and ask</a> — we may be able to help.</p>
+      </div>
+
+      <!-- Cities List -->
+      <div>
+        <h2 style="margin-bottom:20px">Cities We Serve</h2>
+        <div style="display:grid;gap:8px">
+          <% [
+            ['San Antonio','Primary service area — all ZIP codes'],
+            ['New Braunfels','Full service available'],
+            ['Boerne','Full service available'],
+            ['San Marcos','Full service available'],
+            ['Seguin','Full service available'],
+            ['Schertz / Cibolo','Full service available'],
+            ['Converse','Full service available'],
+            ['Universal City','Full service available'],
+            ['Helotes','Full service available'],
+            ['Leon Valley','Full service available'],
+            ['Kirby','Full service available'],
+            ['Windcrest','Full service available']
+          ].forEach(function(city) { %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--cream);border-radius:10px;border:1px solid var(--cream-dark)">
+            <div style="font-weight:600;color:var(--green-dark)"><%= city[0] %></div>
+            <div style="font-size:.78rem;color:#9a9a7a"><%= city[1] %></div>
+          </div>
+          <% }) %>
+        </div>
+
+        <div style="background:var(--green-dark);border-radius:12px;padding:20px;margin-top:20px;text-align:center">
+          <div style="color:#8BC34A;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Don't See Your City?</div>
+          <p style="color:rgba(255,255,255,.75);font-size:.85rem;line-height:1.6;margin-bottom:14px">We may still be able to help. Give us a call or send a message.</p>
+          <a href="/contact" class="btn btn-gold btn-sm">Contact Us</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="section section-cta">
+  <div class="container" style="text-align:center">
+    <h2>In Our Service Area?</h2>
+    <p>Get a free estimate today — we'll come to you.</p>
+    <a href="/contact" class="btn btn-gold" style="margin-top:24px">Request a Free Quote</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+
+<script>
+const map = L.map('serviceMap').setView([29.55, -98.55], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+
+// Service area cities
+const cities = [
+  [29.4241,-98.4936,'San Antonio','Primary Service Area',8],
+  [29.7030,-98.1245,'New Braunfels','Full Service',6],
+  [29.7935,-98.7320,'Boerne','Full Service',6],
+  [29.8827,-97.9411,'San Marcos','Full Service',6],
+  [29.5688,-97.9686,'Seguin','Full Service',5],
+  [29.5574,-98.2676,'Schertz','Full Service',5],
+  [29.4924,-98.3232,'Converse','Full Service',5],
+  [29.5535,-98.3085,'Universal City','Full Service',5],
+  [29.5657,-98.6949,'Helotes','Full Service',5],
+  [29.4924,-98.6149,'Leon Valley','Full Service',5],
+];
+
+cities.forEach(function(c) {
+  L.circleMarker([c[0],c[1]],{
+    radius:c[4], color:'#1B3A1B', fillColor:'#228B22', fillOpacity:.7, weight:2
+  }).addTo(map).bindPopup('<strong>'+c[2]+'</strong><br>'+c[3]);
+});
+
+// Rough service area circle
+L.circle([29.4241,-98.4936],{radius:60000,color:'#228B22',fillColor:'#228B22',fillOpacity:.08,weight:2,dashArray:'8'}).addTo(map);
+</script>
+</body>
+</html>

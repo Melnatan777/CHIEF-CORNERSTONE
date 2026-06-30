@@ -1,0 +1,17 @@
+<% pageTitle = 'Settings'; activeNav = 'settings'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Settings saved.</div><% } %>
+
+<div class="card">
+  <div class="card-header"><h2>Business Settings</h2></div>
+  <form method="POST" action="/admin/settings/save">
+    <div class="form-grid">
+      <div class="form-row form-full"><label>Business Name</label><input type="text" name="business_name" value="<%= settings.business_name || '' %>"></div>
+      <div class="form-row"><label>Phone</label><input type="text" name="business_phone" value="<%= settings.business_phone || '' %>"></div>
+      <div class="form-row"><label>Email</label><input type="text" name="business_email" value="<%= settings.business_email || '' %>"></div>
+      <div class="form-row form-full"><label>Address</label><input type="text" name="business_address" value="<%= settings.business_address || '' %>"></div>
+      <div class="form-row"><label>ZIP Code</label><input type="text" name="business_zip" value="<%= settings.business_zip || '' %>"></div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-green">Save Settings</button></div>
+  </form>
+</div>

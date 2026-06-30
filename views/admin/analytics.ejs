@@ -1,0 +1,401 @@
+<% pageTitle = 'Data Intelligence'; activeNav = 'analytics'; layout = 'admin/layout' %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<%
+const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Revenue by month
+const revenueByMonth = {};
+const expenseByMonth = {};
+monthNames.forEach(m => { revenueByMonth[m] = 0; expenseByMonth[m] = 0; });
+jobs.forEach(j => {
+  if (j.status==='Completed' && j.scheduled_date) {
+    const m = monthNames[new Date(j.scheduled_date).getMonth()];
+    revenueByMonth[m] += parseFloat(j.price)||0;
+  }
+});
+expenses.forEach(e => {
+  if (e.date) {
+    const m = monthNames[new Date(e.date).getMonth()];
+    expenseByMonth[m] += parseFloat(e.amount)||0;
+  }
+});
+
+// Service breakdown
+const serviceCount = {}, serviceRevenue = {};
+jobs.forEach(j => {
+  const s = j.service_type || 'Other';
+  serviceCount[s] = (serviceCount[s]||0) + 1;
+  if (j.status==='Completed') serviceRevenue[s] = (serviceRevenue[s]||0) + (parseFloat(j.price)||0);
+});
+
+// Expense categories
+const expenseCat = {};
+expenses.forEach(e => { expenseCat[e.category] = (expenseCat[e.category]||0) + (parseFloat(e.amount)||0); });
+
+// Lead/client by ZIP
+const clientsByZip = {};
+clients.forEach(c => { if(c.zip){ clientsByZip[c.zip] = (clientsByZip[c.zip]||0)+1; } });
+const topZips = Object.entries(clientsByZip).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+// Client by service type
+const clientsByService = {};
+clients.forEach(c => { const s = c.service_type||'Unknown'; clientsByService[s] = (clientsByService[s]||0)+1; });
+
+// Totals
+const totalRevenue = jobs.filter(j=>j.status==='Completed').reduce((s,j)=>s+(parseFloat(j.price)||0),0);
+const totalExpenses = expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+const netProfit = totalRevenue - totalExpenses;
+const avgJobValue = jobs.filter(j=>j.status==='Completed').length > 0 ? totalRevenue / jobs.filter(j=>j.status==='Completed').length : 0;
+const completionRate = jobs.length > 0 ? Math.round((jobs.filter(j=>j.status==='Completed').length / jobs.length) * 100) : 0;
+%>
+
+<!-- Page Header -->
+<div style="margin-bottom:20px">
+  <div style="color:#7a8a7a;font-size:.82rem;margin-bottom:4px">Last updated: <%= new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) %></div>
+  <p style="font-size:.88rem;color:#7a8a7a">Your business data — leads, customers, revenue, expenses, and area performance — all in one place.</p>
+</div>
+
+<!-- KPI Row -->
+<div class="stats-grid" style="margin-bottom:20px">
+  <div class="stat-card green">
+    <div class="stat-number">$<%= totalRevenue.toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-sub" style="color:#228B22">Completed jobs</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-number">$<%= totalExpenses.toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Total Expenses</div>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-number" style="<%= netProfit < 0 ? 'color:#8B1A1A' : '' %>">$<%= netProfit.toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+    <div class="stat-label">Net Profit</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">$<%= avgJobValue.toFixed(0) %></div>
+    <div class="stat-label">Avg Job Value</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-number"><%= completionRate %>%</div>
+    <div class="stat-label">Completion Rate</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number"><%= clients.length %></div>
+    <div class="stat-label">Total Clients</div>
+  </div>
+</div>
+
+<!-- Tab Navigation -->
+<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid #dde8dd;padding-bottom:0">
+  <% [['revenue','💰 Revenue'],['leads','📋 Leads & Clients'],['area','📍 Area Performance'],['weather','🌤️ Weather Patterns']].forEach(function(tab) { %>
+  <button onclick="showTab('<%= tab[0] %>')" id="tab-<%= tab[0] %>"
+    style="padding:10px 18px;border:none;background:none;cursor:pointer;font-size:.85rem;font-weight:600;color:#7a8a7a;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:'Inter',sans-serif;transition:all .15s"
+    class="analytics-tab">
+    <%= tab[1] %>
+  </button>
+  <% }) %>
+</div>
+
+<!-- REVENUE TAB -->
+<div id="panel-revenue" class="tab-panel">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <div class="card">
+      <div class="card-header"><h2>📈 Revenue vs Expenses — Monthly</h2></div>
+      <canvas id="revenueChart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>💼 Revenue by Service Type</h2></div>
+      <canvas id="serviceRevenueChart" height="220"></canvas>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div class="card">
+      <div class="card-header"><h2>💰 Expenses by Category</h2></div>
+      <canvas id="expenseChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>📊 Job Status Breakdown</h2></div>
+      <canvas id="statusChart" height="200"></canvas>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <% [['Scheduled','#D4A227','badge-gold'],['In Progress','#1a4a7a','badge-blue'],['Completed','#228B22','badge-green'],['Cancelled','#8B1A1A','badge-red']].forEach(function(s){ %>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8faf8;border-radius:8px">
+          <span style="font-size:.82rem;color:#4a6a4a"><%= s[0] %></span>
+          <span style="font-weight:700;font-size:.88rem;color:<%= s[1] %>"><%= jobs.filter(j=>j.status===s[0]).length %></span>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEADS & CLIENTS TAB -->
+<div id="panel-leads" class="tab-panel" style="display:none">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <div class="card">
+      <div class="card-header"><h2>👥 Clients by Service Type</h2></div>
+      <canvas id="clientServiceChart" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>📋 Jobs per Service Type</h2></div>
+      <canvas id="jobTypeChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>🏆 Top Clients by Revenue</h2></div>
+    <% const clientRevenue = {}; jobs.forEach(j=>{ if(j.status==='Completed'&&j.client_name){ clientRevenue[j.client_name]=(clientRevenue[j.client_name]||0)+(parseFloat(j.price)||0); } }); const topClients = Object.entries(clientRevenue).sort((a,b)=>b[1]-a[1]).slice(0,8); %>
+    <% if (topClients.length === 0) { %>
+    <div class="empty-state"><div class="icon">👥</div><p>Complete jobs to see top clients.</p></div>
+    <% } else { %>
+    <div style="display:grid;gap:8px">
+      <% topClients.forEach(function(c,i) { %>
+      <div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:#f8faf8;border-radius:8px">
+        <div style="font-weight:800;color:#1B3A1B;font-size:.9rem;width:24px">#<%= i+1 %></div>
+        <div style="flex:1;font-weight:600;font-size:.9rem;color:#1B3A1B"><%= c[0] %></div>
+        <div style="font-weight:700;font-size:.95rem;color:#228B22">$<%= c[1].toLocaleString('en-US',{minimumFractionDigits:0}) %></div>
+        <div style="height:6px;width:<%= Math.round((c[1]/topClients[0][1])*120) %>px;background:#228B22;border-radius:3px;opacity:.6"></div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- AREA PERFORMANCE TAB -->
+<div id="panel-area" class="tab-panel" style="display:none">
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;margin-bottom:18px">
+    <div class="card">
+      <div class="card-header"><h2>🗺️ Client Service Area Map</h2></div>
+      <div id="clientMap" style="height:400px;border-radius:10px;overflow:hidden;border:1px solid #dde8dd"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header"><h2>📍 Clients by ZIP Code</h2></div>
+        <% if (topZips.length === 0) { %>
+        <div class="empty-state"><div class="icon">📍</div><p>Add client ZIP codes to see area data.</p></div>
+        <% } else { %>
+        <div style="display:grid;gap:8px">
+          <% topZips.forEach(function(z) { %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8faf8;border-radius:8px;border-left:3px solid #228B22">
+            <span style="font-weight:700;color:#1B3A1B">ZIP <%= z[0] %></span>
+            <span style="font-weight:700;color:#228B22"><%= z[1] %> client<%= z[1]>1?'s':'' %></span>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>🏙️ Cities Served</h2></div>
+        <% const cityCounts = {}; clients.forEach(c=>{ if(c.city){ cityCounts[c.city]=(cityCounts[c.city]||0)+1; } }); %>
+        <% if (Object.keys(cityCounts).length === 0) { %>
+        <div class="empty-state"><div class="icon">🏙️</div><p>Add client cities to see coverage.</p></div>
+        <% } else { %>
+        <div style="display:grid;gap:6px">
+          <% Object.entries(cityCounts).sort((a,b)=>b[1]-a[1]).forEach(function(c){ %>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8faf8;border-radius:8px">
+            <span style="font-size:.88rem;color:#1B3A1B;font-weight:600"><%= c[0] %></span>
+            <span style="font-size:.85rem;color:#228B22;font-weight:700"><%= c[1] %></span>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WEATHER PATTERNS TAB -->
+<div id="panel-weather" class="tab-panel" style="display:none">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <div class="card">
+      <div class="card-header"><h2>📅 Best Days to Schedule</h2></div>
+      <div style="display:grid;gap:10px">
+        <% [
+          ['Monday','High','☀️','Historically lowest rain probability. Pack your schedule.','#dcfce7','#166534'],
+          ['Tuesday','High','☀️','Strong scheduling day across Texas.','#dcfce7','#166534'],
+          ['Wednesday','High','⛅','Good day — watch afternoon storms in summer.','#dcfce7','#166534'],
+          ['Thursday','Medium','⛅','Variable. Check forecast before committing.','#fef3c7','#92400e'],
+          ['Friday','Medium','🌦️','Rain probability rises. Leave buffer time.','#fef3c7','#92400e'],
+          ['Saturday','Low','🌧️','Texas afternoon storms common. Morning only.','#fef2f2','#8B1A1A'],
+          ['Sunday','High','☀️','Clear but check client availability.','#dcfce7','#166534']
+        ].forEach(function(d){ %>
+        <div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:<%= d[4] %>;border-radius:10px;border:1px solid <%= d[4] %>">
+          <div style="font-size:1.3rem;width:28px;text-align:center"><%= d[2] %></div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.88rem;color:<%= d[5] %>"><%= d[0] %></div>
+            <div style="font-size:.78rem;color:<%= d[5] %>;opacity:.85"><%= d[3] %></div>
+          </div>
+          <span style="background:white;color:<%= d[5] %>;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px"><%= d[1] %></span>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header"><h2>🌡️ Texas Seasonal Patterns</h2></div>
+        <canvas id="weatherSeasonChart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>💡 Scheduling Intelligence</h2></div>
+        <div style="display:grid;gap:8px">
+          <% [
+            ['Check forecast every Monday','Set the week right. Reschedule before clients ask.','#228B22'],
+            ['Front-load Tue–Wed','Best weather window. Run full crews.','#228B22'],
+            ['June–August: 6AM start','Beat the heat. No outdoor work after 2PM.','#D4A227'],
+            ['Watch ZIP forecasts','Weather varies 10+ miles in Texas.','#D4A227'],
+            ['Freeze alerts = cancel','Protect your crew and equipment.','#8B1A1A']
+          ].forEach(function(tip){ %>
+          <div style="display:flex;gap:10px;padding:10px 12px;background:#f8faf8;border-radius:8px;border-left:3px solid <%= tip[2] %>">
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:.82rem;color:#1B3A1B"><%= tip[0] %></div>
+              <div style="font-size:.78rem;color:#7a8a7a;margin-top:2px"><%= tip[1] %></div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coming Soon: Live Weather Correlation -->
+  <div style="background:linear-gradient(135deg,#1B3A1B,#2E5A2E);border-radius:14px;padding:28px;color:white">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div>
+        <div style="color:#8BC34A;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">📈 Coming Soon — Weather + Revenue Correlation</div>
+        <h3 style="color:white;margin-bottom:10px">See Exactly How Weather Affects Your Revenue</h3>
+        <p style="color:rgba(255,255,255,.75);font-size:.88rem;line-height:1.75;max-width:580px">When this feature launches, you'll see a chart overlaying your completed jobs against historical weather data — so you can see your peak earning windows, your average rain-day losses, and the exact revenue impact of seasonal patterns on your business.</p>
+      </div>
+      <a href="/admin/weather" class="btn btn-gold">Check Weather Now →</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.analytics-tab { transition: all .15s; }
+.analytics-tab.active { color: #1B3A1B !important; border-bottom-color: #228B22 !important; }
+</style>
+
+<script>
+// Tab switching
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+  document.querySelectorAll('.analytics-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+name).style.display='block';
+  document.getElementById('tab-'+name).classList.add('active');
+}
+showTab('revenue');
+
+const green='#228B22', gold='#D4A227', dark='#1B3A1B', red='#8B1A1A', blue='#1a4a7a';
+const months = <%- JSON.stringify(monthNames) %>;
+
+// Revenue vs Expenses
+new Chart(document.getElementById('revenueChart'),{
+  type:'bar',
+  data:{ labels:months, datasets:[
+    {label:'Revenue',data:<%- JSON.stringify(monthNames.map(m=>Math.round(revenueByMonth[m]||0))) %>,backgroundColor:green+'88',borderColor:green,borderWidth:2,borderRadius:6},
+    {label:'Expenses',data:<%- JSON.stringify(monthNames.map(m=>Math.round(expenseByMonth[m]||0))) %>,backgroundColor:red+'88',borderColor:red,borderWidth:2,borderRadius:6}
+  ]},
+  options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+});
+
+// Service Revenue
+new Chart(document.getElementById('serviceRevenueChart'),{
+  type:'doughnut',
+  data:{
+    labels:<%- JSON.stringify(Object.keys(serviceRevenue).length ? Object.keys(serviceRevenue) : ['No completed jobs yet']) %>,
+    datasets:[{data:<%- JSON.stringify(Object.values(serviceRevenue).length ? Object.values(serviceRevenue).map(v=>Math.round(v)) : [1]) %>,backgroundColor:[green,gold,dark,red,blue,'#7a5500','#4a6a4a'],borderWidth:2}]
+  },
+  options:{responsive:true,plugins:{legend:{position:'right'}}}
+});
+
+// Expenses
+new Chart(document.getElementById('expenseChart'),{
+  type:'bar',
+  data:{
+    labels:<%- JSON.stringify(Object.keys(expenseCat).length ? Object.keys(expenseCat) : ['No expenses yet']) %>,
+    datasets:[{label:'Amount',data:<%- JSON.stringify(Object.values(expenseCat).length ? Object.values(expenseCat).map(v=>Math.round(v)) : [0]) %>,backgroundColor:red+'88',borderColor:red,borderWidth:2,borderRadius:6}]
+  },
+  options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+});
+
+// Job Status
+new Chart(document.getElementById('statusChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Scheduled','In Progress','Completed','Cancelled'],
+    datasets:[{data:[<%= jobs.filter(j=>j.status==='Scheduled').length %>,<%= jobs.filter(j=>j.status==='In Progress').length %>,<%= jobs.filter(j=>j.status==='Completed').length %>,<%= jobs.filter(j=>j.status==='Cancelled').length %>],backgroundColor:[gold,blue,green,red],borderWidth:2}]
+  },
+  options:{responsive:true,plugins:{legend:{display:false}}}
+});
+
+// Client by service
+new Chart(document.getElementById('clientServiceChart'),{
+  type:'bar',
+  data:{
+    labels:<%- JSON.stringify(Object.keys(clientsByService).length ? Object.keys(clientsByService) : ['No clients yet']) %>,
+    datasets:[{label:'Clients',data:<%- JSON.stringify(Object.values(clientsByService).length ? Object.values(clientsByService) : [0]) %>,backgroundColor:green+'88',borderColor:green,borderWidth:2,borderRadius:6}]
+  },
+  options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+});
+
+// Jobs by type
+new Chart(document.getElementById('jobTypeChart'),{
+  type:'doughnut',
+  data:{
+    labels:<%- JSON.stringify(Object.keys(serviceCount).length ? Object.keys(serviceCount) : ['No jobs yet']) %>,
+    datasets:[{data:<%- JSON.stringify(Object.values(serviceCount).length ? Object.values(serviceCount) : [1]) %>,backgroundColor:[green,gold,dark,red,blue,'#7a5500'],borderWidth:2}]
+  },
+  options:{responsive:true,plugins:{legend:{position:'right'}}}
+});
+
+// Weather Seasonal
+new Chart(document.getElementById('weatherSeasonChart'),{
+  type:'line',
+  data:{
+    labels:months,
+    datasets:[
+      {label:'Rain Risk %',data:[30,35,45,40,50,55,60,65,60,50,40,35],borderColor:blue,backgroundColor:blue+'22',tension:.4,fill:true},
+      {label:'Heat Risk %',data:[10,15,20,35,55,80,95,95,75,45,20,10],borderColor:red,backgroundColor:red+'22',tension:.4,fill:false}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}
+});
+
+// Map
+const map = L.map('clientMap').setView([29.5, -98.5], 7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+
+// Texas city coordinates for demo/real clients
+const txCities = {
+  '78201':[29.4241,-98.4936,'San Antonio'],'78202':[29.4241,-98.4836,'San Antonio E'],
+  '78207':[29.4341,-98.5136,'San Antonio W'],'78216':[29.5241,-98.4936,'San Antonio N'],
+  '78701':[30.2672,-97.7431,'Austin'],'77001':[29.7604,-95.3698,'Houston'],
+  '75201':[32.7767,-96.7970,'Dallas'],'76101':[32.7555,-97.3308,'Fort Worth'],
+  '78666':[29.8827,-97.9411,'San Marcos'],'78130':[29.7030,-98.1245,'New Braunfels'],
+  '78006':[29.7935,-98.7320,'Boerne'],'78028':[30.0552,-99.1403,'Kerrville']
+};
+
+<% if (clients.length > 0) { %>
+// Real client locations
+<% clients.forEach(function(c) { %>
+<% if (c.zip && c.city) { %>
+(function(){
+  const cityCoords = txCities['<%= c.zip %>'];
+  if (cityCoords) {
+    L.circleMarker([cityCoords[0] + (Math.random()*.02-.01), cityCoords[1] + (Math.random()*.02-.01)], {radius:8,color:'#1B3A1B',fillColor:'#228B22',fillOpacity:.8,weight:2})
+      .addTo(map).bindPopup('<strong><%= c.name %></strong><br><%= c.city %>, TX <%= c.zip %><br><em><%= c.service_type||"Client" %></em>');
+  }
+})();
+<% } else if (c.city) { %>
+<% } %>
+<% }) %>
+<% } else { %>
+// Demo markers
+[['29.4241','-98.4936','San Antonio Client'],['30.2672','-97.7431','Austin Client'],['29.7604','-95.3698','Houston Client']].forEach(function(l){
+  L.circleMarker([parseFloat(l[0]),parseFloat(l[1])],{radius:8,color:'#1B3A1B',fillColor:'#228B22',fillOpacity:.5,weight:2,dashArray:'4'})
+    .addTo(map).bindPopup('<em>'+l[2]+' (demo)</em>');
+});
+<% } %>
+</script>

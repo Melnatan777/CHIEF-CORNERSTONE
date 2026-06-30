@@ -1,0 +1,56 @@
+<% pageTitle = 'Gallery'; activeNav = 'gallery'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Gallery item saved.</div><% } %>
+
+<div class="card">
+  <div class="card-header"><h2>Add Gallery Item</h2></div>
+  <form method="POST" action="/admin/gallery/save">
+    <div class="form-grid">
+      <div class="form-row"><label>Title *</label><input type="text" name="title" required></div>
+      <div class="form-row"><label>Service Type</label>
+        <select name="service_type">
+          <option value="">Select...</option>
+          <option>Lawn Maintenance</option>
+          <option>Landscape Design</option>
+          <option>Tree & Shrub Trimming</option>
+          <option>Irrigation</option>
+          <option>Hardscaping</option>
+          <option>Seasonal Cleanup</option>
+        </select>
+      </div>
+      <div class="form-row form-full"><label>Image URL</label><input type="text" name="image_url" placeholder="https://..."></div>
+      <div class="form-row form-full"><label>Description</label><textarea name="description" style="min-height:80px"></textarea></div>
+      <div class="form-row"><label>Published</label>
+        <select name="published"><option value="1">Yes</option><option value="0">No</option></select>
+      </div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-green">Save Item</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>Gallery Items (<%= items.length %>)</h2></div>
+  <% if (items.length === 0) { %>
+  <div class="empty-state"><div class="icon">📷</div><p>No gallery items yet.</p></div>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Title</th><th>Service</th><th>Published</th><th></th></tr></thead>
+      <tbody>
+        <% items.forEach(item => { %>
+        <tr>
+          <td style="font-weight:600"><%= item.title %></td>
+          <td><%= item.service_type || '—' %></td>
+          <td><span class="badge <%= item.published ? 'badge-green' : 'badge-gray' %>"><%= item.published ? 'Live' : 'Hidden' %></span></td>
+          <td>
+            <form method="POST" action="/admin/gallery/delete/<%= item.id %>" style="display:inline" onsubmit="return confirm('Delete?')">
+              <button class="btn btn-sm btn-red">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>

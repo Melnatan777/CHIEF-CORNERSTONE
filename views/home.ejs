@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chief Cornerstone Landscaping — Cutting Edge. Faith Rooted.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+
+<%- include('partials/nav') %>
+
+<!-- HERO SLIDER -->
+<section class="hero-slider">
+  <div class="slides">
+
+    <div class="slide active" style="background-image:url('/images/hero1.jpg')">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-content-inner">
+          <span class="hero-tag">✝ Faith Rooted. Excellence Driven.</span>
+          <h1>Cutting Edge<br>Landscaping.</h1>
+          <p>Professional landscaping built on integrity, craftsmanship, and the belief that every property deserves to flourish.</p>
+          <div class="hero-actions">
+            <a href="/contact" class="btn btn-gold">Get a Free Quote</a>
+            <a href="/services" class="btn btn-outline">Our Services</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" style="background-image:url('/images/hero4.jpg')">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-content-inner">
+          <span class="hero-tag">✝ Texas Grown. Expertly Crafted.</span>
+          <h1>Beautiful Yards<br>Start Here.</h1>
+          <p>From routine maintenance to complete landscape transformations — we bring your outdoor vision to life.</p>
+          <div class="hero-actions">
+            <a href="/contact" class="btn btn-gold">Get a Free Quote</a>
+            <a href="/gallery" class="btn btn-outline">See Our Work</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" style="background-image:url('/images/hero8.jpg')">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-content-inner">
+          <span class="hero-tag">✝ Hardscaping Done Right.</span>
+          <h1>Outdoor Spaces<br>Built to Last.</h1>
+          <p>Patios, walkways, retaining walls, and outdoor living spaces that add lasting value to your property.</p>
+          <div class="hero-actions">
+            <a href="/contact" class="btn btn-gold">Free Estimate</a>
+            <a href="/services" class="btn btn-outline">View Services</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" style="background-image:url('/images/hero9.jpg')">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-content-inner">
+          <span class="hero-tag">✝ Every Detail Matters.</span>
+          <h1>Precision.<br>Pride. Purpose.</h1>
+          <p>We treat every property like it's our own — because we believe our work is a reflection of something greater.</p>
+          <div class="hero-actions">
+            <a href="/about" class="btn btn-gold">Our Story</a>
+            <a href="/contact" class="btn btn-outline">Work With Us</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" style="background-image:url('/images/hero3.jpg')">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-content-inner">
+          <span class="hero-tag">✝ Built On The Chief Cornerstone.</span>
+          <h1>Your Property<br>Deserves More.</h1>
+          <p>Licensed, insured, and committed to doing the job right the first time — every time.</p>
+          <div class="hero-actions">
+            <a href="/contact" class="btn btn-gold">Get Started Today</a>
+            <a href="/gallery" class="btn btn-outline">See Our Work</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Arrows -->
+  <button class="slider-arrow slider-prev" onclick="moveSlide(-1)">&#8592;</button>
+  <button class="slider-arrow slider-next" onclick="moveSlide(1)">&#8594;</button>
+
+  <!-- Dots -->
+  <div class="slider-dots">
+    <button class="dot active" onclick="goToSlide(0)"></button>
+    <button class="dot" onclick="goToSlide(1)"></button>
+    <button class="dot" onclick="goToSlide(2)"></button>
+    <button class="dot" onclick="goToSlide(3)"></button>
+    <button class="dot" onclick="goToSlide(4)"></button>
+  </div>
+</section>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+
+function goToSlide(n) {
+  slides[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  current = (n + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  dots[current].classList.add('active');
+}
+
+function moveSlide(dir) { goToSlide(current + dir); }
+
+setInterval(() => moveSlide(1), 6000);
+</script>
+
+<!-- SERVICES PREVIEW -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>What We Do</h2>
+      <p>From routine maintenance to complete transformations — we bring your outdoor vision to life.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card">
+        <img src="/images/service-lawn.jpg" alt="Lawn Maintenance" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">🌿</div>
+        <div class="service-card-body">
+          <h3>Lawn Maintenance</h3>
+          <p>Weekly and bi-weekly mowing, edging, and cleanup that keeps your property looking sharp year-round.</p>
+          <a href="/services/lawn-maintenance" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+      <div class="service-card">
+        <img src="/images/service-design.jpg" alt="Landscape Design" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">🌳</div>
+        <div class="service-card-body">
+          <h3>Landscape Design</h3>
+          <p>Custom design plans that transform your outdoor space into something beautiful and functional.</p>
+          <a href="/services/landscape-design" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+      <div class="service-card">
+        <img src="/images/service-trimming.jpg" alt="Tree & Shrub Trimming" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">✂️</div>
+        <div class="service-card-body">
+          <h3>Tree & Shrub Trimming</h3>
+          <p>Expert pruning and trimming to keep your trees and shrubs healthy, shaped, and safe.</p>
+          <a href="/services/tree-trimming" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+      <div class="service-card">
+        <img src="/images/service-irrigation.jpg" alt="Irrigation Systems" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">💧</div>
+        <div class="service-card-body">
+          <h3>Irrigation Systems</h3>
+          <p>Smart irrigation installation and repair to keep your lawn green without wasting water.</p>
+          <a href="/services/irrigation" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+      <div class="service-card">
+        <img src="/images/service-hardscape.jpg" alt="Hardscaping" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">🪨</div>
+        <div class="service-card-body">
+          <h3>Hardscaping</h3>
+          <p>Patios, walkways, retaining walls, and outdoor living spaces built to last a lifetime.</p>
+          <a href="/services/hardscaping" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+      <div class="service-card">
+        <img src="/images/service-cleanup.jpg" alt="Seasonal Cleanup" class="service-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="service-card-img-placeholder" style="display:none">🍂</div>
+        <div class="service-card-body">
+          <h3>Seasonal Cleanup</h3>
+          <p>Spring and fall cleanup services to prepare your property for every season.</p>
+          <a href="/services/seasonal-cleanup" class="btn btn-green">View Service →</a>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:40px">
+      <a href="/services" class="btn btn-green">View All Services</a>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="why-grid">
+      <div class="why-text">
+        <div class="section-tag">Why Chief Cornerstone</div>
+        <h2>Built on Something Solid</h2>
+        <p>We named our company after the most important stone in any structure — the one everything else is built on. For us, that cornerstone is faith, integrity, and a commitment to doing the job right the first time.</p>
+        <p style="margin-top:16px">Every yard we touch, every client we serve, every employee we hire — we hold ourselves to a higher standard because we believe our work is a reflection of something greater than a paycheck.</p>
+        <div class="scripture">
+          <span>"The stone the builders rejected has become the cornerstone."</span>
+          <cite>— Psalm 118:22</cite>
+        </div>
+      </div>
+      <div class="why-stats">
+        <div class="why-stat"><div class="why-num">100%</div><div class="why-label">Satisfaction Guarantee</div></div>
+        <div class="why-stat"><div class="why-num">Licensed</div><div class="why-label">& Insured</div></div>
+        <div class="why-stat"><div class="why-num">Local</div><div class="why-label">Texas Owned</div></div>
+        <div class="why-stat"><div class="why-num">Free</div><div class="why-label">Estimates</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section section-cta">
+  <div class="container" style="text-align:center">
+    <h2>Ready to Transform Your Property?</h2>
+    <p>Get a free estimate from our team. No pressure, no obligation — just honest pricing and expert advice.</p>
+    <a href="/contact" class="btn btn-gold" style="margin-top:28px;font-size:1rem;padding:16px 36px">Request a Free Quote</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

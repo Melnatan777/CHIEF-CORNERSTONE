@@ -1,0 +1,79 @@
+<% pageTitle = 'Overhead Tracker'; activeNav = 'overhead'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Overhead entry saved.</div><% } %>
+
+<%
+const totalOverhead = overhead.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+const byCategory = {};
+overhead.forEach(e=>{ byCategory[e.category]=(byCategory[e.category]||0)+(parseFloat(e.amount)||0); });
+%>
+
+<div class="stats-grid" style="margin-bottom:20px">
+  <div class="stat-card red"><div class="stat-number">$<%= totalOverhead.toLocaleString('en-US',{minimumFractionDigits:0}) %></div><div class="stat-label">Total Overhead</div></div>
+  <div class="stat-card"><div class="stat-number">$<%= (totalOverhead/12).toFixed(0) %></div><div class="stat-label">Monthly Average</div></div>
+  <div class="stat-card gold"><div class="stat-number"><%= overhead.length %></div><div class="stat-label">Entries Logged</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h2>🏢 Overhead by Category</h2></div>
+      <div style="display:grid;gap:8px;margin-bottom:16px">
+        <% [['Insurance','Liability, vehicle, workers comp'],['Vehicle','Truck payments, maintenance, registration'],['Equipment','Mower payments, tool purchases, repairs'],['Marketing','Website, ads, business cards'],['Overhead','Office, phone, software subscriptions']].forEach(function(cat){ %>
+        <%
+          const catTotal = expenses.filter(e=>e.category===cat[0]).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+        %>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:#f8faf8;border-radius:10px;border-left:3px solid #1B3A1B">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.88rem;color:#1B3A1B"><%= cat[0] %></div>
+            <div style="font-size:.75rem;color:#9aaa9a"><%= cat[1] %></div>
+          </div>
+          <div style="font-weight:800;font-size:.95rem;color:<%= catTotal>0?'#8B1A1A':'#9aaa9a' %>">$<%= catTotal.toLocaleString('en-US',{minimumFractionDigits:2}) %></div>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>📋 Overhead Log</h2></div>
+      <% if (overhead.length === 0) { %>
+      <div class="empty-state"><div class="icon">🏢</div><p>No overhead expenses logged yet.</p></div>
+      <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>
+            <% overhead.forEach(function(e){ %>
+            <tr>
+              <td style="color:#7a8a7a;font-size:.82rem"><%= e.date||'—' %></td>
+              <td><span class="badge badge-gray"><%= e.category %></span></td>
+              <td><%= e.description||'—' %></td>
+              <td style="font-weight:700;color:#8B1A1A">$<%= parseFloat(e.amount).toFixed(2) %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <div style="position:sticky;top:24px">
+    <div class="card">
+      <div class="card-header"><h2>+ Log Overhead</h2></div>
+      <form method="POST" action="/admin/expenses/save">
+        <div class="form-row"><label>Category</label>
+          <select name="category">
+            <option>Insurance</option>
+            <option>Vehicle</option>
+            <option>Equipment</option>
+            <option>Marketing</option>
+            <option>Overhead</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Description</label><input type="text" name="description" placeholder="e.g. Liability insurance premium"></div>
+        <div class="form-row"><label>Date</label><input type="date" name="date"></div>
+        <div class="form-row"><label>Amount ($)</label><input type="number" name="amount" step="0.01" min="0" required></div>
+        <div class="form-actions"><button type="submit" class="btn btn-green">Save Entry</button></div>
+      </form>
+    </div>
+  </div>
+</div>

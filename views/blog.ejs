@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=snap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Landscaping Tips & News</h1>
+    <p>Expert advice for Texas homeowners and property managers.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+
+      <% [
+        { title:'When to Water Your Texas Lawn', date:'June 2026', category:'Lawn Care', image:'service-lawn.jpg', excerpt:'Texas summers are brutal. Learn the right time of day, frequency, and amount to keep your lawn green without wasting water or burning your grass.' },
+        { title:'5 Signs Your Trees Need Professional Trimming', date:'May 2026', category:'Tree Care', image:'service-trimming.jpg', excerpt:'Most homeowners wait too long. Here are the warning signs that your trees need attention before they become a hazard or a costly problem.' },
+        { title:'The Case for Hardscaping in Texas', date:'April 2026', category:'Hardscaping', image:'service-hardscape.jpg', excerpt:'A well-designed patio or walkway doesn\'t just look good — it adds real value to your home and reduces maintenance long-term. Here\'s what to know before you build.' },
+        { title:'Spring Cleanup Checklist for Texas Yards', date:'March 2026', category:'Seasonal', image:'service-cleanup.jpg', excerpt:'Winter is rough on Texas landscapes. This step-by-step spring checklist helps you assess damage, prepare your beds, and set your lawn up for a great growing season.' },
+        { title:'Why We Named Our Company Chief Cornerstone', date:'February 2026', category:'About Us', image:'hero1.jpg', excerpt:'The name isn\'t just branding. It\'s a belief that everything we build — for our clients and in our own lives — should rest on something solid. Here\'s the story.' },
+        { title:'Texas Soil Types and What They Mean for Your Lawn', date:'January 2026', category:'Soil & Irrigation', image:'service-irrigation.jpg', excerpt:'San Antonio clay soil behaves very differently from the sandy soil in other parts of Texas. Understanding your soil is the key to a lawn that actually thrives.' }
+      ].forEach(function(post) { %>
+      <div class="service-card">
+        <img src="/images/<%= post.image %>" alt="<%= post.title %>" class="service-card-img" onerror="this.style.display='none'">
+        <div class="service-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="background:var(--cream-dark);color:var(--green-dark);font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px"><%= post.category %></span>
+            <span style="font-size:.75rem;color:#9a9a7a"><%= post.date %></span>
+          </div>
+          <h3 style="font-size:1rem;margin-bottom:8px"><%= post.title %></h3>
+          <p style="font-size:.85rem;margin-bottom:16px"><%= post.excerpt %></p>
+          <a href="/contact" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">Read More →</a>
+        </div>
+      </div>
+      <% }) %>
+
+    </div>
+  </div>
+</section>
+
+<section class="section section-cta">
+  <div class="container" style="text-align:center">
+    <h2>Want Expert Advice for Your Property?</h2>
+    <p>We give free consultations — come talk to us.</p>
+    <a href="/contact" class="btn btn-gold" style="margin-top:24px">Contact Us</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

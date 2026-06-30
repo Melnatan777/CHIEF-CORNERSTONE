@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>What Our Clients Say</h1>
+    <p>Real reviews from real Texas property owners.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-bottom:48px">
+
+      <% [
+        { name:'James R.', location:'San Antonio, TX', service:'Lawn Maintenance', stars:5, text:'Chief Cornerstone has been maintaining our property for over a year. They show up when they say they will, the yard always looks perfect, and they never cut corners. Honest people doing excellent work.' },
+        { name:'Maria G.', location:'New Braunfels, TX', service:'Landscape Design', stars:5, text:'They transformed our backyard completely. From the design meeting to the final walk-through, the whole process was professional and stress-free. Our neighbors keep asking who did our landscaping.' },
+        { name:'Pastor D. Williams', location:'San Antonio, TX', service:'Full Service', stars:5, text:'What sets them apart is the integrity. They spotted a drainage issue we didn\'t even know about and fixed it without being asked. You can tell this team actually cares about doing the job right.' },
+        { name:'Linda T.', location:'Boerne, TX', service:'Hardscaping', stars:5, text:'Our new patio is absolutely beautiful. The crew was respectful, on time every day, and cleaned up completely before leaving. We\'ve already referred them to three neighbors.' },
+        { name:'Mike S.', location:'Austin, TX', service:'Tree Trimming', stars:5, text:'Fast, affordable, and they knew exactly which branches needed to go. Our oak trees look healthier than they have in years. I appreciated that they took the time to explain what they were doing.' },
+        { name:'Sandra K.', location:'San Marcos, TX', service:'Irrigation', stars:5, text:'Our water bill dropped significantly after they upgraded our irrigation system. They installed a smart controller and walked us through how to use it. Excellent investment.' }
+      ].forEach(function(r) { %>
+      <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid var(--cream-dark);display:flex;flex-direction:column">
+        <div style="display:flex;gap:3px;margin-bottom:16px">
+          <% for(let i=0;i<r.stars;i++) { %><span style="color:#D4A227;font-size:1.1rem">★</span><% } %>
+        </div>
+        <p style="font-style:italic;color:#4a4a3a;line-height:1.8;flex:1;margin-bottom:20px">"<%= r.text %>"</p>
+        <div style="border-top:1px solid var(--cream-dark);padding-top:14px">
+          <div style="font-weight:700;color:var(--green-dark)"><%= r.name %></div>
+          <div style="font-size:.8rem;color:#9a9a7a;margin-top:2px"><%= r.location %> · <%= r.service %></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <!-- Google CTA -->
+    <div style="background:linear-gradient(135deg,var(--green-dark),#2E4A2E);border-radius:16px;padding:40px;text-align:center;color:white">
+      <h2 style="color:white;margin-bottom:12px">Happy With Our Work?</h2>
+      <p style="color:rgba(255,255,255,.75);max-width:480px;margin:0 auto 24px">A quick Google review helps other Texas homeowners find honest landscaping services. It takes 60 seconds and means the world to our small business.</p>
+      <a href="/contact" class="btn btn-gold">Leave a Review</a>
+    </div>
+
+  </div>
+</section>
+
+<section class="section section-cta">
+  <div class="container" style="text-align:center">
+    <h2>Ready to Join Our Happy Clients?</h2>
+    <p>Free estimate — no pressure, no obligation.</p>
+    <a href="/contact" class="btn btn-gold" style="margin-top:24px">Request a Free Quote</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+</body>
+</html>

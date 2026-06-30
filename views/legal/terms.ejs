@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('../partials/nav') %>
+<section class="page-hero" style="padding:50px 0 40px">
+  <div class="container"><h1 style="font-size:2rem">Terms of Service</h1><p>Last updated: June 2026</p></div>
+</section>
+<section class="section">
+  <div class="container" style="max-width:760px">
+    <div style="background:white;border-radius:14px;padding:40px;box-shadow:0 2px 12px rgba(0,0,0,.06);line-height:1.8;color:#3a3a2a">
+
+      <% [
+        ['Agreement to Terms','By requesting services from Chief Cornerstone Landscaping, you agree to these terms. If you do not agree, please do not request or use our services.'],
+        ['Services Provided','Chief Cornerstone Landscaping provides residential and commercial landscaping, lawn maintenance, hardscaping, irrigation, tree trimming, and seasonal cleanup services in the San Antonio, Texas area and surrounding communities.'],
+        ['Estimates and Pricing','All estimates are provided free of charge and are valid for 30 days from the date of issue. Prices are based on conditions at the time of estimate. If conditions have materially changed (significant growth, weather damage, etc.), pricing may be adjusted with your prior approval.'],
+        ['Payment Terms','Payment is due upon completion for one-time services unless otherwise agreed in writing. Monthly maintenance clients are invoiced at the beginning of each billing period. Accounts more than 30 days past due may be subject to a late fee of 1.5% per month.'],
+        ['Cancellation','You may cancel scheduled services at any time with 24 hours\' notice. Cancellations with less than 24 hours\' notice may be subject to a cancellation fee equal to 50% of the scheduled service. Monthly maintenance agreements may be cancelled with 30 days\' written notice.'],
+        ['Access to Property','By scheduling services, you grant Chief Cornerstone Landscaping reasonable access to your property to perform agreed-upon work. We will make every effort to protect your property, plants, and structures. Please inform us of any hazards, irrigation heads, or sensitive areas before work begins.'],
+        ['Satisfaction Guarantee','If you are not satisfied with any service, notify us within 48 hours of completion. We will return to address the issue at no additional charge. Our goal is your complete satisfaction.'],
+        ['Limitation of Liability','Chief Cornerstone Landscaping maintains general liability insurance. In the event of property damage caused by our negligence, our liability is limited to the cost of repair or replacement of the damaged item up to the limits of our insurance policy. We are not liable for pre-existing damage, acts of nature, or damage resulting from conditions outside our control.'],
+        ['Governing Law','These terms are governed by the laws of the State of Texas. Any disputes arising from services provided by Chief Cornerstone Landscaping shall be resolved in Bexar County, Texas.'],
+        ['Contact','Questions about these terms? Contact us through our website or call us directly. We believe in plain language and honest business — if anything here is unclear, just ask.']
+      ].forEach(function(section) { %>
+      <h3 style="color:var(--green-dark);margin-top:28px;margin-bottom:10px;font-size:1.05rem"><%= section[0] %></h3>
+      <p><%= section[1] %></p>
+      <% }) %>
+
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

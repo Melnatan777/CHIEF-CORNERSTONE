@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' — ' : '' %>Chief Cornerstone Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#F0F4F0;color:#1C2B1C;min-height:100vh;display:flex}
+
+    /* ── SIDEBAR ─────────────────────────────────────────────────────────────── */
+    .sidebar{width:270px;background:#1B3A1B;height:100vh;position:sticky;top:0;flex-shrink:0;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.2)}
+    .sidebar-logo{padding:24px 22px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;display:flex;align-items:center;gap:12px}
+    .sidebar-logo .cross{font-size:1.3rem;color:#8BC34A;flex-shrink:0}
+    .sidebar-logo-text h2{font-family:'Playfair Display',serif;color:white;font-size:.95rem;line-height:1.2}
+    .sidebar-logo-text p{color:rgba(255,255,255,.35);font-size:.68rem;margin-top:2px;letter-spacing:.5px;text-transform:uppercase}
+    .sidebar-nav{padding:10px 0;flex:1;overflow-y:auto;min-height:0}
+    .sidebar-nav::-webkit-scrollbar{width:4px}
+    .sidebar-nav::-webkit-scrollbar-track{background:transparent}
+    .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+
+    /* Nav sections */
+    .nav-section{padding:14px 20px 5px;color:rgba(255,255,255,.25);font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+
+    /* Single links */
+    .sidebar-nav > a{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.65);text-decoration:none;font-size:.87rem;font-weight:500;transition:all .15s;border-left:3px solid transparent;border-radius:0}
+    .sidebar-nav > a:hover{background:rgba(255,255,255,.07);color:white;border-left-color:rgba(139,195,74,.4)}
+    .sidebar-nav > a.active{background:rgba(139,195,74,.15);color:#8BC34A;border-left-color:#8BC34A}
+    .sidebar-nav > a .nav-icon{width:18px;text-align:center;font-size:.95rem;flex-shrink:0}
+
+    /* Dropdown groups */
+    .nav-group{}
+    .nav-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;color:rgba(255,255,255,.65);font-size:.87rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent;user-select:none}
+    .nav-group-header:hover{background:rgba(255,255,255,.07);color:white}
+    .nav-group-header.active{background:rgba(139,195,74,.12);color:#8BC34A;border-left-color:#8BC34A}
+    .nav-group-header .nav-left{display:flex;align-items:center;gap:10px}
+    .nav-group-header .nav-icon{width:18px;text-align:center;font-size:.95rem}
+    .nav-group-header .arrow{font-size:.6rem;opacity:.5;transition:transform .2s}
+    .nav-group-header.open .arrow{transform:rotate(90deg);opacity:.8}
+    .nav-group-children{display:none;background:rgba(0,0,0,.12)}
+    .nav-group-children.open{display:block}
+    .nav-group-children a{display:flex;align-items:center;gap:8px;padding:9px 20px 9px 42px;color:rgba(255,255,255,.5);text-decoration:none;font-size:.82rem;transition:all .15s;border-left:3px solid transparent}
+    .nav-group-children a:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.05)}
+    .nav-group-children a.active{color:#8BC34A;background:rgba(139,195,74,.1);border-left-color:#8BC34A}
+
+    /* Badge on nav */
+    .nav-badge{background:#D4A227;color:white;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:auto}
+    .nav-badge.red{background:#8B1A1A}
+
+    .sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+    .sidebar-footer a{color:rgba(255,255,255,.4);font-size:.8rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .15s}
+    .sidebar-footer a:hover{color:rgba(255,255,255,.8)}
+
+    /* ── MAIN ────────────────────────────────────────────────────────────────── */
+    .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .topbar{background:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dde8dd;box-shadow:0 1px 6px rgba(0,0,0,.05);position:sticky;top:0;z-index:50}
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .topbar h1{font-size:1.05rem;font-weight:700;color:#1B3A1B}
+    .topbar-breadcrumb{color:#9aaa9a;font-size:.82rem}
+    .topbar-right{display:flex;align-items:center;gap:16px}
+    .topbar-badge{background:#fef3c7;color:#92400e;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer}
+    .topbar-badge.green{background:#dcfce7;color:#166534}
+    .content{padding:24px 28px;flex:1;overflow-y:auto}
+
+    /* ── CARDS ───────────────────────────────────────────────────────────────── */
+    .card{background:white;border-radius:14px;padding:22px 24px;box-shadow:0 1px 8px rgba(0,0,0,.06);margin-bottom:18px;border:1px solid #e8f0e8}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #f0f4f0}
+    .card-header h2{font-size:.95rem;font-weight:700;color:#1B3A1B;margin:0;display:flex;align-items:center;gap:8px}
+    .card-header-actions{display:flex;gap:8px;align-items:center}
+
+    /* ── STAT CARDS ──────────────────────────────────────────────────────────── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+    .stat-card{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 8px rgba(0,0,0,.06);border:1px solid #e8f0e8;border-top:3px solid #1B3A1B}
+    .stat-card.gold{border-top-color:#D4A227}
+    .stat-card.green{border-top-color:#228B22}
+    .stat-card.red{border-top-color:#8B1A1A}
+    .stat-card.blue{border-top-color:#1a4a7a}
+    .stat-number{font-size:1.9rem;font-weight:800;color:#1B3A1B;line-height:1}
+    .stat-label{color:#7a8a7a;font-size:.72rem;font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:.5px}
+    .stat-sub{font-size:.75rem;color:#8BC34A;font-weight:600;margin-top:3px}
+
+    /* ── TABLE ───────────────────────────────────────────────────────────────── */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;padding:9px 12px;font-size:.72rem;font-weight:700;color:#7a8a7a;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #f0f4f0;white-space:nowrap}
+    td{padding:11px 12px;border-bottom:1px solid #f0f4f0;font-size:.88rem;color:#1C2B1C;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f8faf8}
+
+    /* ── FORMS ───────────────────────────────────────────────────────────────── */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-full{grid-column:1/-1}
+    .form-row{margin-bottom:14px}
+    .form-row label{display:block;font-weight:600;font-size:.82rem;color:#1B3A1B;margin-bottom:5px}
+    .form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;border:2px solid #dde8dd;border-radius:8px;font-size:.9rem;font-family:'Inter',sans-serif;outline:none;transition:border .2s;background:white;color:#1C2B1C}
+    .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:#1B3A1B}
+    .form-row textarea{min-height:110px;resize:vertical}
+    .form-actions{display:flex;gap:10px;align-items:center;padding-top:4px}
+    .form-hint{font-size:.75rem;color:#9aaa9a;margin-top:4px}
+
+    /* ── BUTTONS ─────────────────────────────────────────────────────────────── */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .15s;white-space:nowrap;font-family:'Inter',sans-serif}
+    .btn-green{background:#1B3A1B;color:white}.btn-green:hover{background:#0f2510}
+    .btn-gold{background:#D4A227;color:white}.btn-gold:hover{background:#b88a1f}
+    .btn-red{background:#8B1A1A;color:white}.btn-red:hover{background:#6d1414}
+    .btn-ghost{background:#f0f4f0;color:#1B3A1B;border:2px solid #dde8dd}.btn-ghost:hover{border-color:#1B3A1B;background:#e8f0e8}
+    .btn-sm{padding:6px 12px;font-size:.78rem;border-radius:6px}
+
+    /* ── BADGES ──────────────────────────────────────────────────────────────── */
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.2px}
+    .badge-green{background:#dcfce7;color:#166534}
+    .badge-gray{background:#f0f4f0;color:#5a6a5a}
+    .badge-red{background:#fef2f2;color:#8B1A1A}
+    .badge-gold{background:#fef3c7;color:#92400e}
+    .badge-blue{background:#eff6ff;color:#1a4a7a}
+
+    /* ── ALERTS ──────────────────────────────────────────────────────────────── */
+    .alert{padding:12px 16px;border-radius:8px;margin-bottom:14px;font-size:.88rem;display:flex;align-items:center;gap:10px}
+    .alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+    .alert-error{background:#fef2f2;color:#8B1A1A;border:1px solid #fecaca}
+
+    /* ── EMPTY STATE ─────────────────────────────────────────────────────────── */
+    .empty-state{text-align:center;padding:40px 20px;color:#9aaa9a}
+    .empty-state .icon{font-size:2.2rem;margin-bottom:10px}
+    .empty-state h3{color:#5a6a5a;margin-bottom:6px;font-size:.95rem}
+    .empty-state p{font-size:.85rem}
+
+    /* ── JOB TIMELINE ────────────────────────────────────────────────────────── */
+    .day-block{margin-bottom:20px}
+    .day-label{font-size:.72rem;font-weight:700;color:#7a8a7a;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .day-label::after{content:'';flex:1;height:1px;background:#dde8dd}
+    .day-label.today{color:#228B22}
+    .job-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#f8faf8;border-radius:10px;margin-bottom:6px;border-left:3px solid #dde8dd;transition:all .15s}
+    .job-row:hover{background:#f0f4f0;border-left-color:#8BC34A}
+    .job-row.status-scheduled{border-left-color:#D4A227}
+    .job-row.status-in-progress{border-left-color:#228B22}
+    .job-row.status-completed{border-left-color:#9aaa9a;opacity:.7}
+    .job-client{font-weight:700;font-size:.88rem;color:#1B3A1B;min-width:140px}
+    .job-title{font-size:.85rem;color:#4a6a4a;flex:1}
+    .job-date{font-size:.78rem;color:#9aaa9a;white-space:nowrap}
+
+    /* ── LEAD ROW ────────────────────────────────────────────────────────────── */
+    .lead-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#fffbf0;border-radius:10px;margin-bottom:6px;border-left:3px solid #D4A227}
+    .lead-name{font-weight:700;font-size:.88rem;color:#1B3A1B;min-width:120px}
+    .lead-service{font-size:.82rem;color:#4a6a4a;flex:1}
+    .lead-time{font-size:.75rem;color:#9aaa9a;white-space:nowrap}
+
+    @media(max-width:900px){
+      .sidebar{display:none}
+      .content{padding:16px}
+      .topbar{padding:12px 16px}
+      .form-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="cross">✝</div>
+    <div class="sidebar-logo-text">
+      <h2>Chief Cornerstone</h2>
+      <p>Business Admin</p>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+
+    <div class="nav-section">Overview</div>
+    <a href="/admin" class="<%= typeof activeNav!=='undefined'&&activeNav==='dashboard'?'active':'' %>">
+      <span class="nav-icon">📊</span> Dashboard
+      <% if (typeof newLeads !== 'undefined' && newLeads > 0) { %><span class="nav-badge red"><%= newLeads %></span><% } %>
+    </a>
+
+    <div class="nav-section">Business</div>
+
+    <div class="nav-group">
+      <div class="nav-group-header <%= ['clients'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open active' : '' %>" onclick="toggleNav('nav-clients',this)">
+        <span class="nav-left"><span class="nav-icon">👥</span> Clients</span><span class="arrow">▶</span>
+      </div>
+      <div class="nav-group-children <%= ['clients'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open' : '' %>" id="nav-clients">
+        <a href="/admin/clients" class="<%= typeof activeNav!=='undefined'&&activeNav==='clients'?'active':'' %>">All Clients</a>
+        <a href="/admin/clients?status=Active">Active Clients</a>
+        <a href="/admin/leads" class="<%= typeof activeNav!=='undefined'&&activeNav==='leads'?'active':'' %>">📋 Quote Requests</a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-header <%= ['jobs'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open active' : '' %>" onclick="toggleNav('nav-jobs',this)">
+        <span class="nav-left"><span class="nav-icon">🌿</span> Jobs</span><span class="arrow">▶</span>
+      </div>
+      <div class="nav-group-children <%= ['jobs'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open' : '' %>" id="nav-jobs">
+        <a href="/admin/jobs" class="<%= typeof activeNav!=='undefined'&&activeNav==='jobs'?'active':'' %>">All Jobs</a>
+        <a href="/admin/jobs?status=Scheduled">Scheduled</a>
+        <a href="/admin/jobs?status=Completed">Completed</a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-header <%= ['employees'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open active' : '' %>" onclick="toggleNav('nav-crew',this)">
+        <span class="nav-left"><span class="nav-icon">👷</span> Crew</span><span class="arrow">▶</span>
+      </div>
+      <div class="nav-group-children <%= ['employees'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open' : '' %>" id="nav-crew">
+        <a href="/admin/employees" class="<%= typeof activeNav!=='undefined'&&activeNav==='employees'?'active':'' %>">All Employees</a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-header <%= ['expenses','payroll','overhead','profitloss','taxes'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open active' : '' %>" onclick="toggleNav('nav-finance',this)">
+        <span class="nav-left"><span class="nav-icon">💰</span> Financials</span><span class="arrow">▶</span>
+      </div>
+      <div class="nav-group-children <%= ['expenses','payroll','overhead','profitloss','taxes'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open' : '' %>" id="nav-finance">
+        <a href="/admin/financials/overview" class="<%= typeof activeNav!=='undefined'&&activeNav==='profitloss'?'active':'' %>">📊 P&L Overview</a>
+        <a href="/admin/expenses" class="<%= typeof activeNav!=='undefined'&&activeNav==='expenses'?'active':'' %>">💸 Expenses</a>
+        <a href="/admin/financials/payroll" class="<%= typeof activeNav!=='undefined'&&activeNav==='payroll'?'active':'' %>">👷 Payroll</a>
+        <a href="/admin/financials/overhead" class="<%= typeof activeNav!=='undefined'&&activeNav==='overhead'?'active':'' %>">🏢 Overhead</a>
+        <a href="/admin/financials/taxes" class="<%= typeof activeNav!=='undefined'&&activeNav==='taxes'?'active':'' %>">📋 Tax Summary</a>
+      </div>
+    </div>
+
+    <div class="nav-section">Inbox</div>
+
+    <div class="nav-group">
+      <div class="nav-group-header <%= ['inbox-customers','inbox-employees'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open active' : '' %>" onclick="toggleNav('nav-inbox',this)">
+        <span class="nav-left"><span class="nav-icon">📬</span> Messages</span><span class="arrow">▶</span>
+      </div>
+      <div class="nav-group-children <%= ['inbox-customers','inbox-employees'].includes(typeof activeNav!=='undefined'?activeNav:'') ? 'open' : '' %>" id="nav-inbox">
+        <a href="/admin/inbox/customers" class="<%= typeof activeNav!=='undefined'&&activeNav==='inbox-customers'?'active':'' %>">👥 Customer Inbox</a>
+        <a href="/admin/inbox/employees" class="<%= typeof activeNav!=='undefined'&&activeNav==='inbox-employees'?'active':'' %>">👷 Employee Inbox</a>
+      </div>
+    </div>
+
+    <div class="nav-section">Intelligence</div>
+
+    <a href="/admin/analytics" class="<%= typeof activeNav!=='undefined'&&activeNav==='analytics'?'active':'' %>">
+      <span class="nav-icon">📈</span> Analytics & Maps
+    </a>
+    <a href="/admin/weather" class="<%= typeof activeNav!=='undefined'&&activeNav==='weather'?'active':'' %>">
+      <span class="nav-icon">🌤️</span> Weather Center
+    </a>
+    <a href="/admin/soil" class="<%= typeof activeNav!=='undefined'&&activeNav==='soil'?'active':'' %>">
+      <span class="nav-icon">🌱</span> Soil Data
+    </a>
+
+    <div class="nav-section">Website</div>
+    <a href="/admin/gallery" class="<%= typeof activeNav!=='undefined'&&activeNav==='gallery'?'active':'' %>">
+      <span class="nav-icon">📷</span> Gallery
+    </a>
+    <a href="/admin/leads" class="<%= typeof activeNav!=='undefined'&&activeNav==='leads'?'active':'' %>">
+      <span class="nav-icon">📋</span> Quote Requests
+    </a>
+
+    <div class="nav-section">Settings</div>
+    <a href="/admin/settings" class="<%= typeof activeNav!=='undefined'&&activeNav==='settings'?'active':'' %>">
+      <span class="nav-icon">⚙️</span> Settings
+    </a>
+    <a href="/" target="_blank">
+      <span class="nav-icon">🌐</span> View Website
+    </a>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="/admin/logout">🚪 Sign Out</a>
+    <span style="color:rgba(255,255,255,.2);font-size:.7rem">v1.0</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <% if (typeof activeNav !== 'undefined' && activeNav !== 'dashboard') { %>
+      <a href="/admin" style="color:#1B3A1B;text-decoration:none;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:4px">← Dashboard</a>
+      <span style="color:#dde8dd">|</span>
+      <% } %>
+      <h1><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %></h1>
+    </div>
+    <div class="topbar-right">
+      <span style="color:#9aaa9a;font-size:.82rem"><%= new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) %></span>
+      <a href="/admin/logout" style="color:#8B1A1A;text-decoration:none;font-weight:600;font-size:.82rem">Sign Out</a>
+    </div>
+  </div>
+  <div class="content">
+    <%- body %>
+  </div>
+</div>
+
+<script>
+function toggleNav(id, el) {
+  const c = document.getElementById(id);
+  const isOpen = c.classList.contains('open');
+  document.querySelectorAll('.nav-group-children.open').forEach(function(x){ if(x!==c){ x.classList.remove('open'); x.previousElementSibling.classList.remove('open'); } });
+  c.classList.toggle('open', !isOpen);
+  el.classList.toggle('open', !isOpen);
+}
+</script>
+
+</body>
+</html>

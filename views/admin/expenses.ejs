@@ -1,0 +1,72 @@
+<% pageTitle = 'Expenses'; activeNav = 'expenses'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Expense saved.</div><% } %>
+
+<div class="stats-grid" style="margin-bottom:20px">
+  <div class="stat-card red">
+    <div class="stat-number">$<%= total.toFixed(2) %></div>
+    <div class="stat-label">Total Expenses</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number"><%= expenses.filter(e=>e.category==='Fuel/Gas').length %></div>
+    <div class="stat-label">Fuel Entries</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">$<%= expenses.filter(e=>e.category==='Fuel/Gas').reduce((s,e)=>s+e.amount,0).toFixed(2) %></div>
+    <div class="stat-label">Total Fuel Cost</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>Log Expense</h2></div>
+  <form method="POST" action="/admin/expenses/save">
+    <div class="form-grid">
+      <div class="form-row"><label>Category *</label>
+        <select name="category" required>
+          <option value="">Select...</option>
+          <option>Fuel/Gas</option>
+          <option>Equipment</option>
+          <option>Supplies</option>
+          <option>Labor</option>
+          <option>Insurance</option>
+          <option>Vehicle</option>
+          <option>Marketing</option>
+          <option>Overhead</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Date</label><input type="date" name="date"></div>
+      <div class="form-row"><label>Amount ($) *</label><input type="number" name="amount" step="0.01" min="0" required></div>
+      <div class="form-row"><label>Description</label><input type="text" name="description"></div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-green">Save Expense</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>All Expenses (<%= expenses.length %>)</h2></div>
+  <% if (expenses.length === 0) { %>
+  <div class="empty-state"><div class="icon">💰</div><p>No expenses logged yet.</p></div>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+        <% expenses.forEach(e => { %>
+        <tr>
+          <td><%= e.date || '—' %></td>
+          <td><span class="badge badge-gray"><%= e.category %></span></td>
+          <td><%= e.description || '—' %></td>
+          <td style="font-weight:700;color:#8B1A1A">$<%= parseFloat(e.amount).toFixed(2) %></td>
+          <td>
+            <form method="POST" action="/admin/expenses/delete/<%= e.id %>" style="display:inline" onsubmit="return confirm('Delete?')">
+              <button class="btn btn-sm btn-red">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>

@@ -1,0 +1,72 @@
+<% pageTitle = 'Jobs'; activeNav = 'jobs'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Job saved.</div><% } %>
+
+<div class="card">
+  <div class="card-header"><h2>Schedule Job</h2></div>
+  <form method="POST" action="/admin/jobs/save">
+    <div class="form-grid">
+      <div class="form-row"><label>Client</label>
+        <select name="client_id">
+          <option value="">No client assigned</option>
+          <% clients.forEach(c => { %><option value="<%= c.id %>"><%= c.name %></option><% }) %>
+        </select>
+      </div>
+      <div class="form-row"><label>Job Title *</label><input type="text" name="title" required></div>
+      <div class="form-row"><label>Service Type</label>
+        <select name="service_type">
+          <option value="">Select...</option>
+          <option>Lawn Mowing</option>
+          <option>Landscaping Design</option>
+          <option>Tree Trimming</option>
+          <option>Irrigation</option>
+          <option>Hardscaping</option>
+          <option>Seasonal Cleanup</option>
+          <option>Full Service</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Status</label>
+        <select name="status">
+          <option>Scheduled</option>
+          <option>In Progress</option>
+          <option>Completed</option>
+          <option>Cancelled</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Scheduled Date</label><input type="date" name="scheduled_date"></div>
+      <div class="form-row"><label>Price ($)</label><input type="number" name="price" step="0.01" min="0"></div>
+      <div class="form-row form-full"><label>Notes</label><textarea name="notes"></textarea></div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-green">Save Job</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>All Jobs (<%= jobs.length %>)</h2></div>
+  <% if (jobs.length === 0) { %>
+  <div class="empty-state"><div class="icon">🌿</div><p>No jobs yet.</p></div>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Job</th><th>Service</th><th>Date</th><th>Price</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% jobs.forEach(j => { %>
+        <tr>
+          <td><%= j.client_name || '—' %></td>
+          <td style="font-weight:600"><%= j.title %></td>
+          <td><%= j.service_type || '—' %></td>
+          <td><%= j.scheduled_date || '—' %></td>
+          <td>$<%= parseFloat(j.price||0).toFixed(2) %></td>
+          <td><span class="badge <%= j.status==='Completed'?'badge-green':j.status==='Cancelled'?'badge-red':'badge-gold' %>"><%= j.status %></span></td>
+          <td>
+            <form method="POST" action="/admin/jobs/delete/<%= j.id %>" style="display:inline" onsubmit="return confirm('Delete?')">
+              <button class="btn btn-sm btn-red">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>

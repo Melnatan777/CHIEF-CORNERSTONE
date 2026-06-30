@@ -1,0 +1,203 @@
+<% pageTitle = 'Weather Center'; activeNav = 'weather'; layout = 'admin/layout' %>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start">
+
+  <!-- Main Weather Panel -->
+  <div>
+
+    <!-- ZIP Search -->
+    <div class="card" style="margin-bottom:18px">
+      <form method="GET" action="/admin/weather" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="form-row" style="flex:1;min-width:200px;margin:0">
+          <label>Check Weather by ZIP Code</label>
+          <input type="text" name="zip" value="<%= zip %>" placeholder="e.g. 78201 (San Antonio)" maxlength="5">
+        </div>
+        <button type="submit" class="btn btn-green">Check Forecast</button>
+        <% if (zip) { %><a href="/admin/weather" class="btn btn-ghost">Clear</a><% } %>
+      </form>
+    </div>
+
+    <!-- 7-Day Forecast Display -->
+    <div class="card" id="forecast-card">
+      <div class="card-header">
+        <h2>🌤️ 7-Day Forecast <% if(zip){ %> — ZIP <%= zip %><% } %></h2>
+        <% if (apiKey) { %>
+        <span style="background:#dcfce7;color:#166534;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:20px">Live Data</span>
+        <% } else { %>
+        <span style="background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:20px">Add API Key for Live Data</span>
+        <% } %>
+      </div>
+
+      <% if (!zip) { %>
+      <div class="empty-state">
+        <div class="icon">🌤️</div>
+        <h3>Enter a ZIP code above</h3>
+        <p>Check the 7-day forecast for any client ZIP code before scheduling jobs.</p>
+      </div>
+      <% } else { %>
+
+      <!-- Forecast Grid — populated by JS fetch -->
+      <div id="forecast-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px">
+        <!-- Loading state -->
+        <% for(let i=0;i<7;i++) { %>
+        <div class="forecast-day loading" style="background:#f8faf8;border-radius:10px;padding:14px 8px;text-align:center;border:2px solid #dde8dd">
+          <div style="height:14px;background:#e0e8e0;border-radius:4px;margin-bottom:8px"></div>
+          <div style="font-size:1.8rem;margin:8px 0">⏳</div>
+          <div style="height:20px;background:#e0e8e0;border-radius:4px;margin-bottom:6px"></div>
+          <div style="height:12px;background:#e0e8e0;border-radius:4px"></div>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Rain Alert -->
+      <div id="rain-alert" style="display:none;background:#fef2f2;border:2px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:16px">
+        <div style="font-weight:700;color:#8B1A1A;margin-bottom:6px">🌧️ Rain Alert — Reschedule These Days</div>
+        <div id="rain-days" style="font-size:.88rem;color:#8B1A1A"></div>
+      </div>
+
+      <!-- Good Days -->
+      <div id="good-alert" style="display:none;background:#dcfce7;border:2px solid #bbf7d0;border-radius:10px;padding:14px 18px">
+        <div style="font-weight:700;color:#166534;margin-bottom:6px">☀️ Clear Days — Best for Scheduling</div>
+        <div id="good-days" style="font-size:.88rem;color:#166534"></div>
+      </div>
+
+      <% } %>
+    </div>
+
+    <!-- Scheduling Tips -->
+    <div class="card">
+      <div class="card-header"><h2>📋 Scheduling Intelligence</h2></div>
+      <div style="display:grid;gap:10px">
+        <div style="padding:14px 16px;background:#f8faf8;border-radius:10px;border-left:3px solid #228B22">
+          <div style="font-weight:700;font-size:.88rem;color:#1B3A1B;margin-bottom:4px">☀️ Perfect Conditions</div>
+          <div style="font-size:.82rem;color:#4a6a4a">Clear skies, low humidity, temp under 85°F. Pack the schedule — run full crews all day.</div>
+        </div>
+        <div style="padding:14px 16px;background:#fef3c7;border-radius:10px;border-left:3px solid #D4A227">
+          <div style="font-weight:700;font-size:.88rem;color:#92400e;margin-bottom:4px">⛅ Partly Cloudy / Mild Heat</div>
+          <div style="font-size:.82rem;color:#7a5500">Schedule regular jobs. Avoid heavy hardscaping in peak afternoon heat. Hydration breaks required.</div>
+        </div>
+        <div style="padding:14px 16px;background:#fef2f2;border-radius:10px;border-left:3px solid #8B1A1A">
+          <div style="font-weight:700;font-size:.88rem;color:#8B1A1A;margin-bottom:4px">🌧️ Rain Expected</div>
+          <div style="font-size:.82rem;color:#8B1A1A">Reschedule mowing and design jobs. Consider indoor prep work. Call clients 24 hours ahead.</div>
+        </div>
+        <div style="padding:14px 16px;background:#eff6ff;border-radius:10px;border-left:3px solid #1a4a7a">
+          <div style="font-weight:700;font-size:.88rem;color:#1a4a7a;margin-bottom:4px">🌡️ Extreme Heat (95°F+)</div>
+          <div style="font-size:.82rem;color:#1a4a7a">Start at 6AM. No outdoor work after 2PM. Mandatory water breaks every 30 minutes. Crew safety first.</div>
+        </div>
+        <div style="padding:14px 16px;background:#f0f4f0;border-radius:10px;border-left:3px solid #1B3A1B">
+          <div style="font-weight:700;font-size:.88rem;color:#1B3A1B;margin-bottom:4px">❄️ Freeze Warning</div>
+          <div style="font-size:.82rem;color:#4a6a4a">Cancel all outdoor work. Alert irrigation clients about winterization. Check equipment storage.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right: Quick ZIPs + Info -->
+  <div>
+    <div class="card">
+      <div class="card-header"><h2>📍 Quick ZIP Lookup</h2></div>
+      <p style="font-size:.82rem;color:#7a8a7a;margin-bottom:14px">Check weather for your common service areas.</p>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <% [['San Antonio','78201'],['Austin','78701'],['Houston','77001'],['Dallas','75201'],['Fort Worth','76101'],['San Marcos','78666'],['New Braunfels','78130'],['Boerne','78006']].forEach(function(city){ %>
+        <a href="/admin/weather?zip=<%= city[1] %>" class="btn btn-ghost btn-sm" style="justify-content:space-between">
+          <span><%= city[0] %></span>
+          <span style="color:#9aaa9a;font-size:.75rem"><%= city[1] %></span>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <div class="card-header"><h2>🔑 API Setup</h2></div>
+      <% if (apiKey) { %>
+      <div style="background:#dcfce7;border-radius:8px;padding:12px;font-size:.85rem;color:#166534;font-weight:600">✓ Weather API connected — live forecasts active</div>
+      <% } else { %>
+      <div style="font-size:.85rem;color:#4a6a4a;line-height:1.7">
+        <p>To enable live 7-day forecasts:</p>
+        <ol style="padding-left:18px;margin-top:8px;line-height:2">
+          <li>Sign up free at <strong>openweathermap.org</strong></li>
+          <li>Get your free API key</li>
+          <li>Add <code style="background:#f0f4f0;padding:1px 4px;border-radius:3px">WEATHER_API_KEY=yourkey</code> to your environment</li>
+          <li>Redeploy — live forecasts activate instantly</li>
+        </ol>
+        <p style="margin-top:10px;color:#9aaa9a;font-size:.8rem">Free tier: 1,000 calls/day. More than enough.</p>
+      </div>
+      <% } %>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1B3A1B,#2E5A2E);border-radius:12px;padding:18px 20px;color:white">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8BC34A;margin-bottom:8px">💡 The Money Tip</div>
+      <p style="color:rgba(255,255,255,.8);font-size:.85rem;line-height:1.7">Check Monday morning. Reschedule Tuesday. Call clients by 8AM. One proactive call = a loyal client for life. One no-show in the rain = a bad review.</p>
+    </div>
+  </div>
+
+</div>
+
+<% if (zip && apiKey) { %>
+<script>
+const zip = '<%= zip %>';
+const apiKey = '<%= apiKey %>';
+
+fetch(`https://api.openweathermap.org/data/2.5/forecast?zip=${zip},US&appid=${apiKey}&units=imperial&cnt=56`)
+  .then(r => r.json())
+  .then(data => {
+    if (data.cod !== '200') { document.getElementById('forecast-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8B1A1A">Could not load forecast for ZIP ' + zip + '. Check the ZIP code.</div>'; return; }
+
+    // Group by day
+    const days = {};
+    data.list.forEach(item => {
+      const date = item.dt_txt.split(' ')[0];
+      if (!days[date]) days[date] = [];
+      days[date].push(item);
+    });
+
+    const dayKeys = Object.keys(days).slice(0, 7);
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const rainDays = [], goodDays = [];
+
+    const grid = document.getElementById('forecast-grid');
+    grid.innerHTML = '';
+
+    dayKeys.forEach(dateStr => {
+      const items = days[dateStr];
+      const maxTemp = Math.max(...items.map(i => i.main.temp_max));
+      const minTemp = Math.min(...items.map(i => i.main.temp_min));
+      const hasRain = items.some(i => i.weather[0].main === 'Rain' || i.weather[0].main === 'Drizzle' || i.weather[0].main === 'Thunderstorm');
+      const desc = items[Math.floor(items.length/2)].weather[0].description;
+      const icon = items[Math.floor(items.length/2)].weather[0].icon;
+      const d = new Date(dateStr + 'T12:00:00');
+      const dayName = dayNames[d.getDay()];
+      const dayNum = d.getDate();
+
+      const bg = hasRain ? '#fef2f2' : maxTemp > 95 ? '#fef3c7' : '#f0f8f0';
+      const border = hasRain ? '#fecaca' : maxTemp > 95 ? '#fde68a' : '#bbf7d0';
+
+      if (hasRain) rainDays.push(dayName + ' ' + dayNum);
+      else if (!hasRain && maxTemp < 95) goodDays.push(dayName + ' ' + dayNum);
+
+      grid.innerHTML += `
+        <div style="background:${bg};border-radius:10px;padding:12px 8px;text-align:center;border:2px solid ${border}">
+          <div style="font-size:.7rem;font-weight:700;color:#1B3A1B;text-transform:uppercase;letter-spacing:.5px">${dayName}</div>
+          <div style="font-size:.65rem;color:#7a8a7a">${dayNum}</div>
+          <img src="https://openweathermap.org/img/wn/${icon}.png" style="width:40px;height:40px;margin:2px auto;display:block">
+          <div style="font-size:1rem;font-weight:800;color:#1B3A1B">${Math.round(maxTemp)}°</div>
+          <div style="font-size:.7rem;color:#7a8a7a">${Math.round(minTemp)}° low</div>
+          <div style="font-size:.65rem;color:#4a6a4a;margin-top:4px;line-height:1.3">${desc}</div>
+          ${hasRain ? '<div style="font-size:.65rem;font-weight:700;color:#8B1A1A;margin-top:4px">⚠️ Rain</div>' : ''}
+          ${maxTemp > 95 ? '<div style="font-size:.65rem;font-weight:700;color:#92400e;margin-top:4px">🌡️ Hot</div>' : ''}
+        </div>`;
+    });
+
+    if (rainDays.length > 0) {
+      document.getElementById('rain-alert').style.display = 'block';
+      document.getElementById('rain-days').textContent = rainDays.join(', ') + ' — Consider rescheduling outdoor jobs.';
+    }
+    if (goodDays.length > 0) {
+      document.getElementById('good-alert').style.display = 'block';
+      document.getElementById('good-days').textContent = goodDays.join(', ') + ' — Great days to pack in jobs.';
+    }
+  })
+  .catch(() => { document.getElementById('forecast-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#8B1A1A">Weather service unavailable. Check your API key.</div>'; });
+</script>
+<% } %>

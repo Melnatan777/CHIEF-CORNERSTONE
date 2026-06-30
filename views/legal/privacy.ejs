@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('../partials/nav') %>
+<section class="page-hero" style="padding:50px 0 40px">
+  <div class="container"><h1 style="font-size:2rem">Privacy Policy</h1><p>Last updated: June 2026</p></div>
+</section>
+<section class="section">
+  <div class="container" style="max-width:760px">
+    <div style="background:white;border-radius:14px;padding:40px;box-shadow:0 2px 12px rgba(0,0,0,.06);line-height:1.8;color:#3a3a2a">
+
+      <% [
+        ['Information We Collect', 'When you submit a quote request or contact form on our website, we collect your name, phone number, email address, ZIP code, and any message you provide. We do not collect payment information through this website.'],
+        ['How We Use Your Information', 'We use the information you provide solely to respond to your inquiry, provide you with a free estimate, and communicate with you about our services. We do not sell, trade, or share your personal information with third parties for marketing purposes.'],
+        ['Contact Form Data', 'Information submitted through our contact form is stored securely and used only by Chief Cornerstone Landscaping staff to follow up on your request. We treat your contact information with the same respect we bring to your property.'],
+        ['Cookies', 'This website may use basic cookies to improve your browsing experience. We do not use tracking cookies or share cookie data with advertisers.'],
+        ['Third-Party Services', 'Our website uses mapping services to display our service area. These services may collect anonymized data according to their own privacy policies.'],
+        ['Data Security', 'We take reasonable precautions to protect your information. However, no method of transmission over the internet is 100% secure. We encourage you to contact us directly if you have concerns about your data.'],
+        ['Your Rights', 'You may request that we delete any personal information you have submitted to us by contacting us directly. We will honor all reasonable requests promptly.'],
+        ['Contact Us', 'If you have questions about this privacy policy, please contact us through our website contact form or call us directly.']
+      ].forEach(function(section) { %>
+      <h3 style="color:var(--green-dark);margin-top:28px;margin-bottom:10px;font-size:1.05rem"><%= section[0] %></h3>
+      <p><%= section[1] %></p>
+      <% }) %>
+
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>
+</body>
+</html>

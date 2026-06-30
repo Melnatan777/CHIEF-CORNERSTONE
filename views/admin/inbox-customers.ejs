@@ -1,0 +1,76 @@
+<% pageTitle = 'Customer Inbox'; activeNav = 'inbox-customers'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Message saved.</div><% } %>
+
+<div style="display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start">
+
+  <!-- Messages List -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <% if (unread > 0) { %>
+        <span style="background:#fef2f2;color:#8B1A1A;font-size:.82rem;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid #fecaca"><%= unread %> Unread</span>
+        <% } else { %>
+        <span style="background:#dcfce7;color:#166534;font-size:.82rem;font-weight:700;padding:4px 12px;border-radius:20px">All Read</span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (messages.length === 0) { %>
+    <div class="card">
+      <div class="empty-state">
+        <div class="icon">📬</div>
+        <h3>No customer messages yet</h3>
+        <p>Messages from your contact form will appear here.</p>
+      </div>
+    </div>
+    <% } else { %>
+    <% messages.forEach(function(m) { %>
+    <div class="card" style="margin-bottom:10px;border-left:4px solid <%= m.status==='Unread' ? '#D4A227' : '#dde8dd' %>;padding:16px 20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <div style="font-weight:700;font-size:.95rem;color:#1B3A1B"><%= m.client_name || 'Unknown' %></div>
+            <% if(m.status==='Unread'){ %><span class="badge badge-gold">New</span><% } %>
+          </div>
+          <div style="font-size:.82rem;color:#7a8a7a;margin-bottom:8px">
+            <% if(m.client_email){ %><span>✉️ <%= m.client_email %></span><% } %>
+            <% if(m.client_phone){ %><span style="margin-left:12px">📞 <%= m.client_phone %></span><% } %>
+          </div>
+          <% if(m.subject){ %><div style="font-weight:600;font-size:.88rem;color:#1B3A1B;margin-bottom:6px"><%= m.subject %></div><% } %>
+          <div style="font-size:.88rem;color:#4a6a4a;line-height:1.65"><%= m.message %></div>
+          <div style="font-size:.75rem;color:#9aaa9a;margin-top:8px"><%= m.created_at ? m.created_at.substring(0,16).replace('T',' ') : '' %></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <% if(m.status==='Unread'){ %>
+          <form method="POST" action="/admin/inbox/customers/read/<%= m.id %>">
+            <button class="btn btn-sm btn-ghost">Mark Read</button>
+          </form>
+          <% } %>
+          <form method="POST" action="/admin/inbox/customers/delete/<%= m.id %>" onsubmit="return confirm('Delete this message?')">
+            <button class="btn btn-sm btn-red">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+    <% } %>
+  </div>
+
+  <!-- New Message Form -->
+  <div style="position:sticky;top:24px">
+    <div class="card">
+      <div class="card-header"><h2>+ Log a Message</h2></div>
+      <p style="font-size:.82rem;color:#7a8a7a;margin-bottom:16px">Manually log a phone call, voicemail, or walk-in inquiry.</p>
+      <form method="POST" action="/admin/inbox/customers/save">
+        <div class="form-row"><label>Customer Name</label><input type="text" name="client_name" placeholder="John Smith"></div>
+        <div class="form-row"><label>Phone</label><input type="text" name="client_phone" placeholder="(210) 555-0000"></div>
+        <div class="form-row"><label>Email</label><input type="text" name="client_email"></div>
+        <div class="form-row"><label>Subject</label><input type="text" name="subject" placeholder="e.g. Wants lawn mowing quote"></div>
+        <div class="form-row"><label>Message / Notes *</label><textarea name="message" required placeholder="What did they say or request?"></textarea></div>
+        <div class="form-actions"><button type="submit" class="btn btn-green">Save Message</button></div>
+      </form>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ — Chief Cornerstone Landscaping</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public.css">
+</head>
+<body>
+<%- include('partials/nav') %>
+
+<section class="page-hero">
+  <div class="container">
+    <h1>Frequently Asked Questions</h1>
+    <p>Honest answers to the questions we hear most.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="max-width:800px">
+
+    <% [
+      { section: 'Getting Started', questions: [
+        { q: 'How do I get a quote?', a: 'Fill out our contact form or call us directly. We\'ll come out to your property, walk it with you, and give you an honest estimate — no pressure, no obligation. Most estimates are completed within 48 hours.' },
+        { q: 'Is the estimate really free?', a: 'Yes, completely free. We come to you, assess your property, and provide a written estimate at no charge. We believe you should know what you\'re paying before you commit to anything.' },
+        { q: 'How quickly can you start?', a: 'For maintenance plans, we typically start within 1–2 weeks. For design and hardscaping projects, timelines vary based on scope and materials. We\'ll give you a realistic start date during your estimate.' }
+      ]},
+      { section: 'Our Services', questions: [
+        { q: 'Do you offer one-time cleanups or only ongoing maintenance?', a: 'Both. We offer one-time cleanup services as well as weekly and bi-weekly maintenance plans. Many clients start with a one-time cleanup and then move to a regular schedule.' },
+        { q: 'Do you work on commercial properties?', a: 'Yes. We service both residential and commercial properties throughout our service area. Commercial clients receive the same level of care and professionalism as our residential clients.' },
+        { q: 'What areas of Texas do you serve?', a: 'We primarily serve the San Antonio metro area and surrounding communities including New Braunfels, Boerne, San Marcos, and Seguin. See our Service Area page for a full coverage map.' },
+        { q: 'Can you design and install a brand new landscape?', a: 'Absolutely. We handle full landscape design from concept to completion — plant selection, installation, irrigation, and follow-up care. We\'ll design something that works for your Texas climate and your lifestyle.' }
+      ]},
+      { section: 'Pricing & Payment', questions: [
+        { q: 'How do you determine pricing?', a: 'Every property is different. Pricing is based on the size of the area, the scope of work, and the frequency of service. We provide a written estimate before any work begins so you always know what to expect.' },
+        { q: 'Do you require a contract for maintenance?', a: 'No long-term contracts for routine maintenance. We earn your business every visit. For larger design and installation projects, we use a simple written agreement that outlines the scope and timeline.' },
+        { q: 'What payment methods do you accept?', a: 'We accept cash, check, and all major credit cards. Payment is due upon completion for one-time services. Monthly maintenance clients are billed at the beginning of each month.' }
+      ]},
+      { section: 'About Our Company', questions: [
+        { q: 'Are you licensed and insured?', a: 'Yes. We are fully licensed and carry general liability insurance as well as workers\' compensation coverage. You\'re protected on every job.' },
+        { q: 'Why is the company called Chief Cornerstone?', a: 'The name comes from scripture — "The stone the builders rejected has become the cornerstone" (Psalm 118:22). We named our company after the most important stone in any structure because we believe everything we build should rest on a solid foundation of integrity, faith, and excellence.' },
+        { q: 'What if I\'m not satisfied with the work?', a: 'We stand behind everything we do. If you\'re not satisfied, tell us and we\'ll make it right — no questions asked. Your satisfaction is not a policy, it\'s a promise.' }
+      ]}
+    ].forEach(function(section) { %>
+
+    <div style="margin-bottom:40px">
+      <div style="font-size:.72rem;font-weight:700;color:#9a9a7a;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px"><%= section.section %></div>
+      <% section.questions.forEach(function(item, i) { %>
+      <div class="faq-item" style="border:1px solid var(--cream-dark);border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <button onclick="toggleFaq(this)" style="width:100%;text-align:left;padding:18px 20px;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;color:var(--green-dark)">
+          <%= item.q %>
+          <span style="font-size:.7rem;color:#9a9a7a;flex-shrink:0;margin-left:12px;transition:transform .2s">▼</span>
+        </button>
+        <div class="faq-answer" style="display:none;padding:0 20px 18px;font-size:.9rem;color:#5a5a3a;line-height:1.8;background:var(--cream)">
+          <%= item.a %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <% }) %>
+
+    <div style="background:linear-gradient(135deg,var(--green-dark),#2E4A2E);border-radius:14px;padding:32px;text-align:center;color:white">
+      <h3 style="color:white;margin-bottom:10px">Still Have Questions?</h3>
+      <p style="color:rgba(255,255,255,.75);margin-bottom:20px">We're happy to talk through anything before you commit to a thing.</p>
+      <a href="/contact" class="btn btn-gold">Contact Us</a>
+    </div>
+
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+
+<script>
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const arrow = btn.querySelector('span');
+  const isOpen = answer.style.display === 'block';
+  document.querySelectorAll('.faq-answer').forEach(a => a.style.display='none');
+  document.querySelectorAll('.faq-item button span').forEach(s => s.style.transform='rotate(0deg)');
+  if (!isOpen) { answer.style.display='block'; arrow.style.transform='rotate(180deg)'; }
+}
+</script>
+</body>
+</html>

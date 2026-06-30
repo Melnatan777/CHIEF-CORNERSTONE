@@ -1,0 +1,58 @@
+<% pageTitle = 'Employees'; activeNav = 'employees'; layout = 'admin/layout' %>
+
+<% if (saved) { %><div class="alert alert-success">✓ Employee saved.</div><% } %>
+
+<div class="card">
+  <div class="card-header"><h2>Add Employee</h2></div>
+  <form method="POST" action="/admin/employees/save">
+    <div class="form-grid">
+      <div class="form-row"><label>Name *</label><input type="text" name="name" required></div>
+      <div class="form-row"><label>Role</label>
+        <select name="role">
+          <option value="">Select...</option>
+          <option>Crew Lead</option>
+          <option>Landscaper</option>
+          <option>Driver</option>
+          <option>Equipment Operator</option>
+          <option>Admin</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Phone</label><input type="text" name="phone"></div>
+      <div class="form-row"><label>Email</label><input type="text" name="email"></div>
+      <div class="form-row"><label>Hourly Rate ($)</label><input type="number" name="hourly_rate" step="0.01" min="0"></div>
+      <div class="form-row"><label>Status</label>
+        <select name="status"><option>Active</option><option>Inactive</option></select>
+      </div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-green">Save Employee</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>All Employees (<%= employees.length %>)</h2></div>
+  <% if (employees.length === 0) { %>
+  <div class="empty-state"><div class="icon">👷</div><p>No employees yet.</p></div>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Rate/hr</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% employees.forEach(e => { %>
+        <tr>
+          <td style="font-weight:600"><%= e.name %></td>
+          <td><%= e.role || '—' %></td>
+          <td><%= e.phone || '—' %></td>
+          <td>$<%= e.hourly_rate || '0' %></td>
+          <td><span class="badge <%= e.status==='Active'?'badge-green':'badge-gray' %>"><%= e.status %></span></td>
+          <td>
+            <form method="POST" action="/admin/employees/delete/<%= e.id %>" style="display:inline" onsubmit="return confirm('Delete?')">
+              <button class="btn btn-sm btn-red">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
